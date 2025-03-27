@@ -1,0 +1,30 @@
+# Ignore IDE specific files
+*.iml
+.idea/
+.vscode/
+
+# Ignore gradle files
+.gradle
+/local.properties
+local.properties
+/captures
+
+# Ignore generated android libraries and caches
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+
+# Ignore android navigation editor and asset wizard
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+
+# Ignore android build artifacts
+/build/
+app/build/
+.externalNativeBuild
+.cxx
+
+# Ignore android test output
+/output/

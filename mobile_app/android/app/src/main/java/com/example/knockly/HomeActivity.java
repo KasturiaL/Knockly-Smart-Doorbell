@@ -1,0 +1,65 @@
+package com.example.knockly;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+public class HomeActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_home);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        // Add header fragment
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false);
+        getSupportFragmentManager().beginTransaction().replace(R.id.HomeHeaderFragment, pageHeader).commit();
+
+        // Button to link to app settings
+        Button appSettingsButton = findViewById(R.id.AppSettingsButton);
+        appSettingsButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent(HomeActivity.this, AppSettingsActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        // Simple button to link to doorbell page
+        // Feel free to delete/change when developing the actual UI
+        Button button = findViewById(R.id.exampleDoorbellButton);
+        button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent(HomeActivity.this, IndvDoorbellActivity.class);
+                intent.putExtra("Doorbell_Info", "Doorbell #1");
+                startActivity(intent);
+            }
+        });
+
+        // Simple button to link to add doorbell page
+        // Feel free to delete/change when developing the actual UI
+        Button button2 = findViewById(R.id.exampleAddDoorbellButton);
+        button2.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                Intent intent = new Intent(HomeActivity.this, AddDoorbellActivity.class);
+                intent.putExtra("Doorbell_Info", "Doorbell #1");
+                startActivity(intent);
+            }
+        });
+    }
+}
