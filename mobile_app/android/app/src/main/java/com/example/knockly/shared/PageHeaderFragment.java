@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.shared;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.example.knockly.appSettingsPage.AppSettingsActivity;
+import com.example.knockly.R;
 
 /**
  * A {@link Fragment} header to be added to each page for consistency.

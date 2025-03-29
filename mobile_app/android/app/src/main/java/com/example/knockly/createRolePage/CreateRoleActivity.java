@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.createRolePage;
 
 import android.os.Bundle;
 
@@ -8,13 +8,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class AppSettingsActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class CreateRoleActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_app_settings);
+        setContentView(R.layout.activity_create_role);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -22,7 +25,8 @@ public class AppSettingsActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<username> Settings", true, false);
-        getSupportFragmentManager().beginTransaction().replace(R.id.AppSettingsHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create Role", true, true);
+        getSupportFragmentManager().beginTransaction().replace(R.id.CreateRoleHeaderFragment, pageHeader).commit();
+
     }
 }

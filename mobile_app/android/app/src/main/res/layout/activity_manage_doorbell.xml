@@ -5,11 +5,11 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ManageDoorbellActivity">
+    tools:context=".manageDoorbellPage.ManageDoorbellActivity">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/ManageDoorbellHeaderFragment"
-        android:name="com.example.knockly.PageHeaderFragment"
+        android:name="com.example.knockly.shared.PageHeaderFragment"
         android:layout_width="match_parent"
         android:layout_height="75dp"
         app:layout_constraintStart_toStartOf="parent"

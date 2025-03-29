@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.manageUsersPage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,13 +11,18 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class ManageFacesActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.blocklistPage.BlocklistActivity;
+import com.example.knockly.createRolePage.CreateRoleActivity;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class ManageUsersActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_manage_faces);
+        setContentView(R.layout.activity_manage_users);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -25,27 +30,27 @@ public class ManageFacesActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true, true);
-        getSupportFragmentManager().beginTransaction().replace(R.id.ManageFacesHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Users", true, true);
+        getSupportFragmentManager().beginTransaction().replace(R.id.ManageUsersHeaderFragment, pageHeader).commit();
 
-        // Simple button to link to add new face page
-        // Feel free to change when developing actual UI
-        Button button = findViewById(R.id.AddFacesButton);
+        // Simple button to link to create role page
+        // Feel free to delete/change when developing the actual UI
+        Button button = findViewById(R.id.CreateRoleButton);
         button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent(ManageFacesActivity.this, AddNewFaceActivity.class);
+                Intent intent = new Intent(ManageUsersActivity.this, CreateRoleActivity.class);
                 startActivity(intent);
             }
         });
 
         // Simple button to link to blocklist page
-        // Feel free to change when developing actual UI
-        Button button2 = findViewById(R.id.FacesBlocklistButton);
+        // Feel free to delete/change when developing the actual UI
+        Button button2 = findViewById(R.id.UsersBlocklistButton);
         button2.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent(ManageFacesActivity.this, BlocklistActivity.class);
+                Intent intent = new Intent(ManageUsersActivity.this, BlocklistActivity.class);
                 startActivity(intent);
             }
         });

@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.indvDoorbellPage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.knockly.doorbellLogsPage.DoorbellLogsActivity;
+import com.example.knockly.feedHistoryPage.FeedHistoryActivity;
+import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
+import com.example.knockly.manageFacesPage.ManageFacesActivity;
+import com.example.knockly.manageUsersPage.ManageUsersActivity;
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
 
 public class IndvDoorbellActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.loginPage;
 
 import android.os.Bundle;
 
@@ -8,13 +8,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class FeedHistoryActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class ResetPasswordActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_feed_history);
+        setContentView(R.layout.activity_reset_password);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -22,7 +25,7 @@ public class FeedHistoryActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Feed History", true, true);
-        getSupportFragmentManager().beginTransaction().replace(R.id.FeedHistoryHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Reset Password", true, false);
+        getSupportFragmentManager().beginTransaction().replace(R.id.ResetPassHeaderFragment, pageHeader).commit();
     }
 }
