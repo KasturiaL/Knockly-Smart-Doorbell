@@ -22,7 +22,7 @@ public class CreateRoleActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create Role", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create Role", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.CreateRoleHeaderFragment, pageHeader).commit();
 
     }

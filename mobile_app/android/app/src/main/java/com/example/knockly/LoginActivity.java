@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Knockly Login", false);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Knockly Login", false, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.LoginHeaderFragment, pageHeader).commit();
 
         // Simple button to simulate login

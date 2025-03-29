@@ -25,7 +25,7 @@ public class ManageUsersActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Users", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Users", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageUsersHeaderFragment, pageHeader).commit();
 
         // Simple button to link to create role page

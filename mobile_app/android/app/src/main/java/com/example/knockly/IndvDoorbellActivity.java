@@ -25,7 +25,7 @@ public class IndvDoorbellActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Doorbell #...", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Doorbell #...", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellHeaderFragment, pageHeader).commit();
 
         // Simple button to link to manage doorbell page

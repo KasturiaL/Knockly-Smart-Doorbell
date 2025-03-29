@@ -22,7 +22,7 @@ public class ResetPasswordActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Reset Password", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Reset Password", true, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.ResetPassHeaderFragment, pageHeader).commit();
     }
 }

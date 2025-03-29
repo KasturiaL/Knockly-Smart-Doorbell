@@ -43,17 +43,8 @@ public class HomeActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.HomeButtonsFragment, buttonsFragment).commit();
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.HomeHeaderFragment, pageHeader).commit();
 
-        // Button to link to app settings
-        Button appSettingsButton = findViewById(R.id.AppSettingsButton);
-        appSettingsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(HomeActivity.this, AppSettingsActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 }

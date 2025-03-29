@@ -22,7 +22,7 @@ public class BlocklistActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Blocklist", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Blocklist", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.BlocklistHeaderFragment, pageHeader).commit();
     }
 }

@@ -25,7 +25,7 @@ public class ManageFacesActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageFacesHeaderFragment, pageHeader).commit();
 
         // Simple button to link to add new face page

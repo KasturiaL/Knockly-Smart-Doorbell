@@ -22,7 +22,7 @@ public class AppSettingsActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<username> Settings", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<username> Settings", true, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.AppSettingsHeaderFragment, pageHeader).commit();
     }
 }

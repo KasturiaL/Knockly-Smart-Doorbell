@@ -22,7 +22,7 @@ public class ManageDoorbellActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Settings", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Settings", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageDoorbellHeaderFragment, pageHeader).commit();
 
     }

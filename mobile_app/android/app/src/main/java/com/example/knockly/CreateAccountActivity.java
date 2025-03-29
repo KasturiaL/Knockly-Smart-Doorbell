@@ -22,7 +22,7 @@ public class CreateAccountActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create An Account", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create An Account", true, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.CreateAccHeaderFragment, pageHeader).commit();
     }
 }

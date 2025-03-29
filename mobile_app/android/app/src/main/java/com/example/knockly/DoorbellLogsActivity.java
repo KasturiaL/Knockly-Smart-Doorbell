@@ -22,7 +22,7 @@ public class DoorbellLogsActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Logs", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Logs", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.DoorbellLogsHeaderFragment, pageHeader).commit();
     }
 }

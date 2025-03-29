@@ -22,7 +22,7 @@ public class FeedHistoryActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Feed History", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Feed History", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.FeedHistoryHeaderFragment, pageHeader).commit();
     }
 }

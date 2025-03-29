@@ -22,7 +22,7 @@ public class AddNewFaceActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Add Face", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Add Face", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.AddFaceHeaderFragment, pageHeader).commit();
     }
 }
