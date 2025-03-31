@@ -106,7 +106,7 @@ public class HomePageButtonsFragment extends Fragment {
             }
 
             // Make and add 'Add Doorbell' button
-            MaterialButton addBellButton = createStyledDoorbellButton(getContext(), "+ Add Doorbell");
+            MaterialButton addBellButton = createAddDoorbellButton(getContext());
 
             addBellButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -154,6 +154,16 @@ public class HomePageButtonsFragment extends Fragment {
         button.setLayoutParams(params);
 
         return button;
+    }
+    private MaterialButton createAddDoorbellButton(Context context){
+        MaterialButton button = createStyledDoorbellButton(context, "Add Doorbell");
 
+        int padding = (int) (ViewUtils.dpToPx(12, context));
+
+        button.setPadding(padding, padding, padding, padding);
+        button.setIcon(ContextCompat.getDrawable(context, R.drawable.plus_icon));
+        button.setIconSize((int) (ViewUtils.dpToPx(24, context)));
+        button.setIconTint(null);
+        return button;
     }
 }
