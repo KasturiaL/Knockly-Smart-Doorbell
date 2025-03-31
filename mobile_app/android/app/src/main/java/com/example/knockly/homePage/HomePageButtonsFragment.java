@@ -17,6 +17,7 @@ import androidx.gridlayout.widget.GridLayout;
 import com.example.knockly.addDoorbellPage.AddDoorbellActivity;
 import com.example.knockly.indvDoorbellPage.IndvDoorbellActivity;
 import com.example.knockly.R;
+import com.example.knockly.utils.ButtonUtils;
 import com.example.knockly.utils.JsonUtils;
 import com.example.knockly.utils.ViewUtils;
 import com.google.android.material.button.MaterialButton;
@@ -81,6 +82,11 @@ public class HomePageButtonsFragment extends Fragment {
         JSONObject currentObject;
         String doorbellName;
         try {
+            // Calculate button dimensions based on screen size
+            int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
+            int marginSize = (int) (ViewUtils.dpToPx(8, getContext()));
+            int buttonWidth = (screenWidth / 2) - (4 * marginSize);
+            int buttonHeight = (int) (ViewUtils.dpToPx(100, getContext()));
             for (int m = 0; m < mDoorbells.length(); m++) {
                 currentObject = mDoorbells.optJSONObject(m);
                 if (currentObject == null) {
@@ -90,7 +96,7 @@ public class HomePageButtonsFragment extends Fragment {
                 final String doorbellID = currentObject.optString("ID", "ID_NOT_FOUND");
 
                 // Create button for doorbell
-                MaterialButton doorbellButton = createStyledDoorbellButton(getContext(), doorbellName);
+                MaterialButton doorbellButton = ButtonUtils.createDynamicStyledButton(getContext(), doorbellName, buttonWidth, buttonHeight, marginSize);
 
                 doorbellButton.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -106,7 +112,7 @@ public class HomePageButtonsFragment extends Fragment {
             }
 
             // Make and add 'Add Doorbell' button
-            MaterialButton addBellButton = createAddDoorbellButton(getContext());
+            MaterialButton addBellButton = createAddDoorbellButton(getContext(), buttonWidth, buttonHeight, marginSize);
 
             addBellButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -124,39 +130,8 @@ public class HomePageButtonsFragment extends Fragment {
         }
         return view;
     }
-
-    // Helper method to style doorbell buttons dynamically
-    private MaterialButton createStyledDoorbellButton(Context context, String text){
-        MaterialButton button = new MaterialButton(context);
-
-        // Set button text
-        button.setText(text);
-        button.setTextColor(ContextCompat.getColor(context, R.color.black));
-        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-
-        // Set button background
-        button.setCornerRadius((int) (ViewUtils.dpToPx(5, context)));
-        button.setStrokeWidth(3);
-        button.setStrokeColorResource(R.color.black);
-        button.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.colorSecondary));
-
-        // Set layout parameters
-        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-        int marginSize = (int) (ViewUtils.dpToPx(8, context));
-        int buttonWidth = (screenWidth / 2) - (4 * marginSize);
-        int buttonHeight = (int) (ViewUtils.dpToPx(100, context));
-
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = buttonWidth;
-        params.height = buttonHeight;
-        params.setMargins(marginSize, marginSize, marginSize, marginSize);
-
-        button.setLayoutParams(params);
-
-        return button;
-    }
-    private MaterialButton createAddDoorbellButton(Context context){
-        MaterialButton button = createStyledDoorbellButton(context, "Add Doorbell");
+    private MaterialButton createAddDoorbellButton(Context context, int width, int height, int margins){
+        MaterialButton button = ButtonUtils.createDynamicStyledButton(context, "Add Doorbell", width, height, margins);
 
         int padding = (int) (ViewUtils.dpToPx(12, context));
 
