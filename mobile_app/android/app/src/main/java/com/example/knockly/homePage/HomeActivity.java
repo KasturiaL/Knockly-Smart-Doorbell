@@ -42,6 +42,7 @@ public class HomeActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.HomeButtonsFragment, buttonsFragment).commit();
 
         // Add header fragment
+        // TODO: Change the username to whatever the display name (if set)/username (if no display name) is in the headerTitle param
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.HomeHeaderFragment, pageHeader).commit();
 

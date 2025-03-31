@@ -33,6 +33,7 @@ public class IndvDoorbellActivity extends AppCompatActivity {
         });
 
         // Add header fragment
+        // TODO: Change headerTitle to the doorbell's name, same with the other button intents' values
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Doorbell #...", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellHeaderFragment, pageHeader).commit();
 
