@@ -12,6 +12,7 @@
         android:name="com.example.knockly.shared.PageHeaderFragment"
         android:layout_width="match_parent"
         android:layout_height="75dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -19,14 +20,15 @@
         android:id="@+id/LiveFeedContainer"
         android:name="com.example.knockly.indvDoorbellPage.LiveFeedFragment"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="25dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="80dp"
+        app:layout_constraintBottom_toTopOf="@+id/DoorControlContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/IndvDoorbellHeaderFragment" />
+        app:layout_constraintTop_toTopOf="@+id/IndvDoorbellHeaderFragment"
+        app:layout_constraintVertical_bias="0.0" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/DoorControlContainer"
@@ -34,30 +36,21 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginStart="10dp"
-        android:layout_marginTop="388dp"
         android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/IndvDoorbellOptionsFragment"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/LiveFeedContainer" />
-
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragmentContainerView2"
-        android:name="com.example.knockly.indvDoorbellPage.LiveFeedFragment"
-        android:layout_width="0dp"
-        android:layout_height="368dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/IndvDoorbellHeaderFragment" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/IndvDoorbellOptionsFragment"
         android:name="com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:saveEnabled="true"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
