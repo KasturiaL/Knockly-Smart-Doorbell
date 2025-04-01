@@ -18,6 +18,7 @@ import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.R;
 import com.example.knockly.shared.PageHeaderFragment;
+import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
 
 public class IndvDoorbellActivity extends AppCompatActivity {
 
@@ -32,69 +33,17 @@ public class IndvDoorbellActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get data of current doorbell from intent that started the activity
+        Intent intent = getIntent();
+        String doorbellID = intent.getStringExtra("Doorbell_ID");
+
         // Add header fragment
         // TODO: Change headerTitle to the doorbell's name, same with the other button intents' values
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Doorbell #...", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellHeaderFragment, pageHeader).commit();
 
-        // Simple button to link to manage doorbell page
-        // Feel free to delete/change when developing the actual UI
-        Button button = findViewById(R.id.ManageDoorbellButton);
-        button.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(IndvDoorbellActivity.this, ManageDoorbellActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to feed history page
-        // Feel free to delete/change when developing the actual UI
-        Button button2 = findViewById(R.id.FeedHistoryButton);
-        button2.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(IndvDoorbellActivity.this, FeedHistoryActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to manage user profiles page
-        // Feel free to delete/change when developing the actual UI
-        Button button3 = findViewById(R.id.ManageUserProfsButton);
-        button3.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(IndvDoorbellActivity.this, ManageUsersActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to manage face profiles page
-        // Feel free to delete/change when developing the actual UI
-        Button button4 = findViewById(R.id.ManageFaceProfsButton);
-        button4.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(IndvDoorbellActivity.this, ManageFacesActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to doorbell logs page
-        // Feel free to delete/change when developing the actual UI
-        Button button5 = findViewById(R.id.DoorbellLogsButton);
-        button5.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(IndvDoorbellActivity.this, DoorbellLogsActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
-                startActivity(intent);
-            }
-        });
+        // Add options tab at bottom
+        DoorbellOptionsTabFragment tabFragment = DoorbellOptionsTabFragment.newInstance(doorbellID);
+        getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellOptionsFragment, tabFragment).commit();
     }
 }

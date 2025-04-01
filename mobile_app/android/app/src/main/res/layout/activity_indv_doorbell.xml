@@ -15,58 +15,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/FeedHistoryButton"
-        android:layout_width="120dp"
-        android:layout_height="90dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="100dp"
-        android:text="Doorbell Feed History"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/ManageDoorbellButton"
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginBottom="48dp"
-        android:text="Manage Doorbell"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/ManageFaceProfsButton"
-        android:layout_width="120dp"
-        android:layout_height="90dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="2dp"
-        android:layout_marginBottom="100dp"
-        android:text="Manage Face Profiles"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/FeedHistoryButton"
-        app:layout_constraintStart_toEndOf="@+id/ManageUserProfsButton" />
-
-    <Button
-        android:id="@+id/ManageUserProfsButton"
-        android:layout_width="120dp"
-        android:layout_height="90dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginBottom="100dp"
-        android:text="Manage User Profiles"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/DoorbellLogsButton"
-        android:layout_width="180dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="48dp"
-        android:text="Doorbell Logs"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView2"
         android:name="com.example.knockly.indvDoorbellPage.LiveFeedFragment"
@@ -78,4 +26,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/IndvDoorbellHeaderFragment" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/IndvDoorbellOptionsFragment"
+        android:name="com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
