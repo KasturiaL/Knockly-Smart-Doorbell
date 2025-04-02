@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.appSettingsPage;
 
 import android.os.Bundle;
 
@@ -8,13 +8,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class BlocklistActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class AppSettingsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_blocklist);
+        setContentView(R.layout.activity_app_settings);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -22,7 +25,7 @@ public class BlocklistActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Blocklist", true);
-        getSupportFragmentManager().beginTransaction().replace(R.id.BlocklistHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<username> Settings", true, false);
+        getSupportFragmentManager().beginTransaction().replace(R.id.AppSettingsHeaderFragment, pageHeader).commit();
     }
 }

@@ -1,5 +1,6 @@
-package com.example.knockly;
+package com.example.knockly.shared;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -9,6 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.example.knockly.appSettingsPage.AppSettingsActivity;
+import com.example.knockly.R;
 
 /**
  * A {@link Fragment} header to be added to each page for consistency.
@@ -24,10 +28,12 @@ public class PageHeaderFragment extends Fragment {
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_TITLE = "headerTitle";
-    private static final String ARG_INC_BUTTON = "includeBackButton";
+    private static final String ARG_INC_BACK_BUTTON = "includeBackButton";
+    private static final String ARG_INC_SETTINGS_BUTTON = "includeSettingsButton";
 
     private String mHeaderTitle;
     private boolean mIncludeBackButton;
+    private boolean mIncludeSettingsButton;
 
     public PageHeaderFragment() {
         // Required empty public constructor
@@ -41,11 +47,12 @@ public class PageHeaderFragment extends Fragment {
      * @param includeBackButton Boolean to determine whether back button at top left should be included
      * @return A new instance of fragment PageHeaderFragment.
      */
-    public static PageHeaderFragment newInstance(String headerTitle, boolean includeBackButton) {
+    public static PageHeaderFragment newInstance(String headerTitle, boolean includeBackButton, boolean includeSettingsButton) {
         PageHeaderFragment fragment = new PageHeaderFragment();
         Bundle args = new Bundle();
         args.putString(ARG_TITLE, headerTitle);
-        args.putBoolean(ARG_INC_BUTTON, includeBackButton);
+        args.putBoolean(ARG_INC_BACK_BUTTON, includeBackButton);
+        args.putBoolean(ARG_INC_SETTINGS_BUTTON, includeSettingsButton);
         fragment.setArguments(args);
         return fragment;
     }
@@ -55,7 +62,8 @@ public class PageHeaderFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mHeaderTitle = getArguments().getString(ARG_TITLE, getResources().getString(R.string.defaultHeaderTitle));
-            mIncludeBackButton = getArguments().getBoolean(ARG_INC_BUTTON, false);
+            mIncludeBackButton = getArguments().getBoolean(ARG_INC_BACK_BUTTON, false);
+            mIncludeSettingsButton = getArguments().getBoolean(ARG_INC_SETTINGS_BUTTON, false);
         }
     }
 
@@ -75,8 +83,7 @@ public class PageHeaderFragment extends Fragment {
         // Check if back button needs to be shown or not
         // By default it isn't added
         ImageButton backButton = view.findViewById(R.id.headerBackButton);
-        boolean showButton = (getArguments() != null) && getArguments().getBoolean(ARG_INC_BUTTON);
-        if (showButton){
+        if (mIncludeBackButton){
             backButton.setVisibility(View.VISIBLE);
             backButton.setEnabled(true);
             backButton.setOnClickListener(new View.OnClickListener(){
@@ -90,6 +97,25 @@ public class PageHeaderFragment extends Fragment {
         else{
             backButton.setVisibility(View.INVISIBLE);
             backButton.setEnabled(false);
+        }
+
+        // Check if settings button needs to be shown or not
+        // By default it isn't added
+        ImageButton settingsButton = view.findViewById(R.id.headerSettingsButton);
+        if (mIncludeSettingsButton){
+            settingsButton.setVisibility(View.VISIBLE);
+            settingsButton.setEnabled(true);
+            settingsButton.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getActivity(), AppSettingsActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
+        else{
+            settingsButton.setVisibility(View.INVISIBLE);
+            settingsButton.setEnabled(false);
         }
         return view;
     }

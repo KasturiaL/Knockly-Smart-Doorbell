@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.feedHistoryPage;
 
 import android.os.Bundle;
 
@@ -8,13 +8,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class AddDoorbellActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class FeedHistoryActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_add_doorbell);
+        setContentView(R.layout.activity_feed_history);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -22,7 +25,7 @@ public class AddDoorbellActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Add Doorbell", true);
-        getSupportFragmentManager().beginTransaction().replace(R.id.AddDoorbellHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Feed History", true, true);
+        getSupportFragmentManager().beginTransaction().replace(R.id.FeedHistoryHeaderFragment, pageHeader).commit();
     }
 }

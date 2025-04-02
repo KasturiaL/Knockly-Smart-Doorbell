@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.loginPage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.knockly.R;
+import com.example.knockly.homePage.HomeActivity;
+import com.example.knockly.shared.PageHeaderFragment;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -26,7 +30,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Knockly Login", false);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Knockly Login", false, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.LoginHeaderFragment, pageHeader).commit();
 
         // Simple button to simulate login

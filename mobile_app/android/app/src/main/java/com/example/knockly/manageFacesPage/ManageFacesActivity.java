@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.manageFacesPage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.knockly.R;
+import com.example.knockly.addFacePage.AddNewFaceActivity;
+import com.example.knockly.blocklistPage.BlocklistActivity;
+import com.example.knockly.shared.PageHeaderFragment;
 
 public class ManageFacesActivity extends AppCompatActivity {
 
@@ -25,7 +30,7 @@ public class ManageFacesActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageFacesHeaderFragment, pageHeader).commit();
 
         // Simple button to link to add new face page

@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".HomeActivity">
+    tools:context=".homePage.HomeActivity">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/HomeHeaderFragment"
@@ -14,50 +14,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/exampleDoorbellButton"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="60dp"
-        android:text="Doorbell#1"
-        android:textColor="@color/black"
-        app:backgroundTint="@color/colorSecondary"
-        app:backgroundTintMode="src_over"
-        app:cornerRadius="10dp"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/HomeButtonsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/HomeHeaderFragment"
-        app:strokeColor="@color/black"
-        app:strokeWidth="1dp" />
+        app:layout_constraintTop_toBottomOf="@+id/HomeDoorbellTitleText" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/AppSettingsButton"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/HomeDoorbellTitleText"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:text="Settings"
-        android:textColor="@color/black"
-        app:backgroundTint="@color/colorSecondary"
-        app:cornerRadius="5dp"
+        android:layout_marginTop="10dp"
+        android:paddingLeft="12dp"
+        android:text="@string/homePageDoorbellSubTitle"
+        android:textSize="24sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/HomeHeaderFragment"
-        app:strokeColor="@color/black"
-        app:strokeWidth="1dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/exampleAddDoorbellButton"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="35dp"
-        android:text="Add Doorbell"
-        android:textColor="@color/black"
-        app:backgroundTint="@color/colorSecondary"
-        app:backgroundTintMode="src_over"
-        app:cornerRadius="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/HomeHeaderFragment"
-        app:strokeColor="@color/black"
-        app:strokeWidth="1dp" />
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/HomeHeaderFragment" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

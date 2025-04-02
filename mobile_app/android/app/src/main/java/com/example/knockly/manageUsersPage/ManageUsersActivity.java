@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.manageUsersPage;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,13 +11,18 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class HomeActivity extends AppCompatActivity {
+import com.example.knockly.R;
+import com.example.knockly.blocklistPage.BlocklistActivity;
+import com.example.knockly.createRolePage.CreateRoleActivity;
+import com.example.knockly.shared.PageHeaderFragment;
+
+public class ManageUsersActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_home);
+        setContentView(R.layout.activity_manage_users);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -25,39 +30,27 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false);
-        getSupportFragmentManager().beginTransaction().replace(R.id.HomeHeaderFragment, pageHeader).commit();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Users", true, true);
+        getSupportFragmentManager().beginTransaction().replace(R.id.ManageUsersHeaderFragment, pageHeader).commit();
 
-        // Button to link to app settings
-        Button appSettingsButton = findViewById(R.id.AppSettingsButton);
-        appSettingsButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(HomeActivity.this, AppSettingsActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to doorbell page
+        // Simple button to link to create role page
         // Feel free to delete/change when developing the actual UI
-        Button button = findViewById(R.id.exampleDoorbellButton);
+        Button button = findViewById(R.id.CreateRoleButton);
         button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent(HomeActivity.this, IndvDoorbellActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
+                Intent intent = new Intent(ManageUsersActivity.this, CreateRoleActivity.class);
                 startActivity(intent);
             }
         });
 
-        // Simple button to link to add doorbell page
+        // Simple button to link to blocklist page
         // Feel free to delete/change when developing the actual UI
-        Button button2 = findViewById(R.id.exampleAddDoorbellButton);
+        Button button2 = findViewById(R.id.UsersBlocklistButton);
         button2.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent(HomeActivity.this, AddDoorbellActivity.class);
-                intent.putExtra("Doorbell_Info", "Doorbell #1");
+                Intent intent = new Intent(ManageUsersActivity.this, BlocklistActivity.class);
                 startActivity(intent);
             }
         });

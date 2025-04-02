@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.createRolePage;
 
 import android.os.Bundle;
 
@@ -7,6 +7,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.knockly.R;
+import com.example.knockly.shared.PageHeaderFragment;
 
 public class CreateRoleActivity extends AppCompatActivity {
 
@@ -22,7 +25,7 @@ public class CreateRoleActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create Role", true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Create Role", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.CreateRoleHeaderFragment, pageHeader).commit();
 
     }
