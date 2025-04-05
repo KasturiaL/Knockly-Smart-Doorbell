@@ -1,17 +1,17 @@
 package com.example.knockly.indvDoorbellPage;
 
 import android.content.Context;
+import android.media.Image;
 import android.os.Bundle;
 
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
 import com.example.knockly.R;
@@ -78,24 +78,25 @@ public class LiveFeedFragment extends Fragment {
         }
     }
 
+    private View view;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_live_feed, container, false);
+        view = inflater.inflate(R.layout.fragment_live_feed, container, false);
 
         ImageButton changeViewButton = view.findViewById(R.id.changeViewButton);
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-        ConstraintLayout feed = view.findViewById(R.id.FeedLayout);
         ConstraintLayout fragment = view.findViewById(R.id.LiveFeedFrame);
+
         changeViewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (liveFeedExpanded){
-                    shrinkFeed(changeViewButton, toolbar, feed, fragment);
+                    shrinkFeed(changeViewButton, fragment);
                 }
                 else{
-                   expandFeed(changeViewButton, toolbar, feed, fragment);
+                    expandFeed(changeViewButton, fragment);
                 }
                 liveFeedExpanded = !liveFeedExpanded;
             }
@@ -104,73 +105,20 @@ public class LiveFeedFragment extends Fragment {
         return view;
     }
 
+    private void shrinkFeed(ImageButton changeViewButton, ConstraintLayout fragment) {
+        callback.shrinkLiveFeed();
+        changeViewButton.setImageResource(R.drawable.fullscreen_arrows);
+    }
+
+    private void expandFeed(ImageButton changeViewButton, ConstraintLayout fragment) {
+        callback.expandLiveFeed();
+        changeViewButton.setImageResource(R.drawable.minimize_arrows);
+    }
+
     // Prevent memory leaks by removing callback when fragment is destroyed
     @Override
     public void onDetach(){
         super.onDetach();
         callback = null;
-    }
-
-    private void shrinkFeed(ImageButton changeViewButton, Toolbar toolbar, ConstraintLayout feed, ConstraintLayout fragment){
-        // Add other fragments back to the activity
-        callback.shrinkLiveFeed();
-        // Change the arrows on the button
-        changeViewButton.setImageResource(R.drawable.fullscreen_arrows);
-
-        // Stop toolbar hovering over feed
-        // Reset elevation and z value
-        toolbar.setElevation(0f);
-        toolbar.setZ(10f);
-
-        // Make toolbar opaque again
-        toolbar.getBackground().setAlpha(255);
-
-        // Reset constraints
-        ConstraintSet constraints = new ConstraintSet();
-        constraints.clone(fragment);
-        constraints.clear(R.id.FeedLayout, ConstraintSet.TOP);
-        constraints.clear(R.id.FeedLayout, ConstraintSet.BOTTOM);
-        constraints.connect(R.id.FeedLayout, ConstraintSet.TOP, R.id.toolbar, ConstraintSet.BOTTOM);
-        constraints.connect(R.id.FeedLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-        constraints.connect(R.id.FeedLayout, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-        constraints.constrainHeight(R.id.FeedLayout, ConstraintSet.WRAP_CONTENT);
-        constraints.constrainPercentWidth(R.id.toolbar, 1f);
-        constraints.applyTo(fragment);
-
-        // Move toolbar back up
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
-        params.topMargin = 0;
-        toolbar.setLayoutParams(params);
-    }
-
-    private void expandFeed(ImageButton changeViewButton, Toolbar toolbar, ConstraintLayout feed, ConstraintLayout fragment){
-        // Remove other fragments from the activity
-        callback.expandLiveFeed();
-
-        // Change arrows on the button
-        changeViewButton.setImageResource(R.drawable.minimize_arrows);
-
-        // Make toolbar hover over feed
-        // Increase z of toolbar so it sits on top
-        toolbar.setElevation(16f);
-
-        // Make toolbar slightly transparent
-        toolbar.getBackground().setAlpha(225);
-
-        // Edit constraints
-        ConstraintSet constraints = new ConstraintSet();
-        constraints.clone(fragment);
-        constraints.clear(R.id.FeedLayout, ConstraintSet.TOP);
-        constraints.connect(R.id.FeedLayout, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-        constraints.constrainPercentWidth(R.id.toolbar, 0.9f);
-        constraints.applyTo(fragment);
-
-        // Set z of feed so it sits under toolbar
-        toolbar.setZ(10f);
-
-        // Move toolbar down so it looks more like it is hovering
-        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
-        params.topMargin = 100;
-        toolbar.setLayoutParams(params);
     }
 }
