@@ -12,22 +12,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/colorSecondary"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="@string/buttonMinimiseOptionsTitle"
         android:textColor="@color/black"
-        android:textSize="14sp"
+        android:textSize="16sp"
         app:cornerRadius="0dp"
         app:icon="@drawable/down_arrow"
         app:iconGravity="textStart"
         app:iconSize="20dp"
         app:iconTint="@color/black"
-        app:layout_constraintWidth_percent="0.9"
+        app:layout_constraintWidth_percent="1"
         app:strokeColor="@color/black"
         app:strokeWidth="1dp" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/MinimiseTabButtonContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:backgroundTint="@color/white">
 
         <Button
             android:id="@+id/feedHistoryButton"
