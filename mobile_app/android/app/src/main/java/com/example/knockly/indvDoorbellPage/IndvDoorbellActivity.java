@@ -25,10 +25,12 @@ import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.R;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
+import com.google.android.material.snackbar.Snackbar;
 
-public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedFragment.FragmentCallback {
+public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedFragment.FragmentCallback, DoorControlFragment.FragmentCallback {
 
     private Insets systemBars;
+    private  LiveFeedFragment liveFeedFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +56,13 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         DoorbellOptionsTabFragment tabFragment = DoorbellOptionsTabFragment.newInstance(doorbellID);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellOptionsFragment, tabFragment).commit();
 
-        LiveFeedFragment liveFeedFragment = LiveFeedFragment.newInstance(doorbellID);
+        // Add live feed fragment
+        liveFeedFragment = LiveFeedFragment.newInstance(doorbellID);
         getSupportFragmentManager().beginTransaction().replace(R.id.LiveFeedContainer, liveFeedFragment).commit();
+
+        // Add door control fragment
+        DoorControlFragment doorControlFragment = DoorControlFragment.newInstance(doorbellID);
+        getSupportFragmentManager().beginTransaction().replace(R.id.DoorControlContainer, doorControlFragment).commit();
     }
 
     @Override
@@ -122,5 +129,43 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         controller.show(WindowInsetsCompat.Type.systemBars());
         controller.show(WindowInsetsCompat.Type.navigationBars());
         controller.show(WindowInsetsCompat.Type.statusBars());
+    }
+
+    @Override
+    public void openDoor(){
+        // TODO: Add API call to actually open the door
+
+        // Variable declaration to assume that api has returned success status
+        int returnStatus = 200;
+
+        View view = findViewById(R.id.main);
+        // If door opened successfully then change door status button to open
+        if (returnStatus == 200){
+            liveFeedFragment.setToggleButtonOn();
+            Snackbar.make(view, "Door opened successfully!", Snackbar.LENGTH_SHORT).show();
+        }
+        // If error occurred
+        else{
+            Snackbar.make(view, "Error opening door, please try again", Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void closeDoor(){
+        // TODO: Add API call to actually close the door
+
+        // Variable declaration to assume that api has returned success status
+        int returnStatus = 200;
+
+        View view = findViewById(R.id.main);
+        // If door opened successfully then change door status button to open
+        if (returnStatus == 200){
+            liveFeedFragment.setToggleButtonOff();
+            Snackbar.make(view, "Door closed successfully!", Snackbar.LENGTH_SHORT).show();
+        }
+        // If error occurred
+        else{
+            Snackbar.make(view, "Error closing door, please try again", Snackbar.LENGTH_SHORT).show();
+        }
     }
 }

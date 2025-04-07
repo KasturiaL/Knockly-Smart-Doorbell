@@ -5,6 +5,7 @@ import android.media.Image;
 import android.os.Bundle;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ToggleButton;
 
 import com.example.knockly.R;
 
@@ -113,6 +115,18 @@ public class LiveFeedFragment extends Fragment {
     private void expandFeed(ImageButton changeViewButton, ConstraintLayout fragment) {
         callback.expandLiveFeed();
         changeViewButton.setImageResource(R.drawable.minimize_arrows);
+    }
+
+    public void setToggleButtonOn(){
+        ToggleButton button = view.findViewById(R.id.toggleButton);
+        button.setChecked(true);
+        button.setBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_light));
+    }
+
+    public void setToggleButtonOff(){
+        ToggleButton button = view.findViewById(R.id.toggleButton);
+        button.setChecked(false);
+        button.setBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.holo_red_light));
     }
 
     // Prevent memory leaks by removing callback when fragment is destroyed

@@ -1,5 +1,6 @@
 package com.example.knockly.indvDoorbellPage;
 
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.example.knockly.R;
 
@@ -17,14 +19,19 @@ import com.example.knockly.R;
  */
 public class DoorControlFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
+    // TODO: Update arguments with data necessary for api call
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_DOORBELLID = "doorbell_ID";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    // TODO: Update arguments with data necessary for api call
+    private String mDoorbellID;
+    private FragmentCallback callback;
+
+    // Interface to get functions from main activity
+    public interface FragmentCallback{
+        void openDoor();
+        void closeDoor();
+    }
 
     public DoorControlFragment() {
         // Required empty public constructor
@@ -34,26 +41,38 @@ public class DoorControlFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
+     * @param doorbellID ID of doorbell to open for API
      * @return A new instance of fragment DoorControlFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static DoorControlFragment newInstance(String param1, String param2) {
+    public static DoorControlFragment newInstance(String doorbellID) {
         DoorControlFragment fragment = new DoorControlFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString(ARG_DOORBELLID   , doorbellID);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    // Send activity functions to interface
+    @Override
+    public void onAttach(Context context){
+        super.onAttach(context);
+
+        try{
+            callback = (FragmentCallback) context;
+        }
+        catch(ClassCastException e){
+            // Error that will occur if activity does not implement the interface methods
+            throw new ClassCastException(context.toString()
+                    + " must implement FragmentCallback interface");
+        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mDoorbellID = getArguments().getString(ARG_DOORBELLID);
         }
     }
 
@@ -61,6 +80,31 @@ public class DoorControlFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_door_control, container, false);
+        View view = inflater.inflate(R.layout.fragment_door_control, container, false);
+
+        Button openButton = view.findViewById(R.id.openButton);
+        Button closeButton = view.findViewById(R.id.closeButton);
+
+        openButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callback.openDoor();
+            }
+        });
+
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                callback.closeDoor();
+            }
+        });
+        return view;
+    }
+
+    // Prevent memory leaks by removing callback when fragment is destroyed
+    @Override
+    public void onDetach(){
+        super.onDetach();
+        callback = null;
     }
 }
