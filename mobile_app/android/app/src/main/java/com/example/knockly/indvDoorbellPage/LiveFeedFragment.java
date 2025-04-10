@@ -1,12 +1,20 @@
 package com.example.knockly.indvDoorbellPage;
 
+import android.content.Context;
+import android.media.Image;
 import android.os.Bundle;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ToggleButton;
 
 import com.example.knockly.R;
 
@@ -20,7 +28,15 @@ public class LiveFeedFragment extends Fragment {
     // the fragment initialization parameters for doorbellID
     private static final String ARG_DOORBELL_ID = "000000";
 
-    private String doorbellID;
+    private String mDoorbellID;
+    private boolean liveFeedExpanded = false;
+    private FragmentCallback callback;
+
+    // Interface to get functions from main activity
+    public interface FragmentCallback{
+        void expandLiveFeed();
+        void shrinkLiveFeed();
+    }
 
     public LiveFeedFragment() {
         // Required empty public constructor
@@ -41,18 +57,82 @@ public class LiveFeedFragment extends Fragment {
         return fragment;
     }
 
+    // Send activity functions to interface
+    @Override
+    public void onAttach(Context context){
+        super.onAttach(context);
+
+        try{
+            callback = (FragmentCallback) context;
+        }
+        catch(ClassCastException e){
+            // Error that will occur if activity does not implement the interface methods
+            throw new ClassCastException(context.toString()
+                    + " must implement FragmentCallback interface");
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            doorbellID = getArguments().getString(ARG_DOORBELL_ID);
+            mDoorbellID = getArguments().getString(ARG_DOORBELL_ID);
         }
     }
+
+    private View view;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_live_feed, container, false);
+        view = inflater.inflate(R.layout.fragment_live_feed, container, false);
+
+        ImageButton changeViewButton = view.findViewById(R.id.changeViewButton);
+        ConstraintLayout fragment = view.findViewById(R.id.LiveFeedFrame);
+
+        changeViewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (liveFeedExpanded){
+                    shrinkFeed(changeViewButton, fragment);
+                }
+                else{
+                    expandFeed(changeViewButton, fragment);
+                }
+                liveFeedExpanded = !liveFeedExpanded;
+            }
+        });
+
+        return view;
+    }
+
+    private void shrinkFeed(ImageButton changeViewButton, ConstraintLayout fragment) {
+        callback.shrinkLiveFeed();
+        changeViewButton.setImageResource(R.drawable.fullscreen_arrows);
+    }
+
+    private void expandFeed(ImageButton changeViewButton, ConstraintLayout fragment) {
+        callback.expandLiveFeed();
+        changeViewButton.setImageResource(R.drawable.minimize_arrows);
+    }
+
+    public void setToggleButtonOn(){
+        ToggleButton button = view.findViewById(R.id.toggleButton);
+        button.setChecked(true);
+        button.setBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_light));
+    }
+
+    public void setToggleButtonOff(){
+        ToggleButton button = view.findViewById(R.id.toggleButton);
+        button.setChecked(false);
+        button.setBackgroundColor(ContextCompat.getColor(getContext(), android.R.color.holo_red_light));
+    }
+
+    // Prevent memory leaks by removing callback when fragment is destroyed
+    @Override
+    public void onDetach(){
+        super.onDetach();
+        callback = null;
     }
 }
