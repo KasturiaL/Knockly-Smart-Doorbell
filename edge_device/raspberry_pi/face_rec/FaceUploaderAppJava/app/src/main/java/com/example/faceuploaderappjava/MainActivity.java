@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 FTPClient ftp = new FTPClient();
 
                 // FTP server info (this should match Pi’s settings)
-                String ftpHost = "10.130.8.15"; // IP of Raspberry Pi
+                String ftpHost = "192.168.0.18"; // IP of Raspberry Pi
                 int ftpPort = 2121;
                 String ftpUser = "pi";
                 String ftpPass = "raspberry";
@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if (!login) throw new Exception("FTP login failed."); 
 
-                ftp.enterLocalPassiveMode(); // passive mode is usually safer for mobile uploads
+                ftp.enterLocalActiveMode(); // passive mode is usually safer for mobile uploads
                 ftp.setFileType(FTP.BINARY_FILE_TYPE); // binary = raw file mode, good for video
 
                 // upload the actual file
