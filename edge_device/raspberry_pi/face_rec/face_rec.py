@@ -188,38 +188,48 @@ def live_recognition():
                 if matches[best_idx]:
                     name = known_face_names[best_idx]
 
-            if name == "Unknown":
-                # scale coordinates back up
-                top    *= cv_scaler
-                right  *= cv_scaler
-                bottom *= cv_scaler
-                left   *= cv_scaler
+            # scale coords back up for drawing
+            top    *= cv_scaler
+            right  *= cv_scaler
+            bottom *= cv_scaler
+            left   *= cv_scaler
 
+            if name == "Unknown":
                 # draw red box + label for unknown only
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
                 cv2.putText(
                     frame, name, (left + 6, top - 6),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
                 )
-
             else:
+                # draw green box + name for known faces
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                cv2.putText(
+                    frame, name, (left + 6, top - 6),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
+                )
+
                 
                 #  Code to send "Known Face" command to middleman
+               
                 send_command(3)
                 time.sleep(0.1)
 
+               
                 #  Code to send "Open door" command to middleman
+               
                 send_command(1)
 
                 # automatic door close after 5 seconds
                 threading.Timer(5, lambda: send_command(2)).start()
 
-        cv2.imshow("Facial Recognition - Unknown Only", frame)
+        cv2.imshow("Facial Recognition", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     cv2.destroyAllWindows()
     picam2.stop()
+
 
 # Step 6: Just grabs the latest vid from the FTP dir and processes it
 def process_latest_video(user_id):
