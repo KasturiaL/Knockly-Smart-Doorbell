@@ -5,6 +5,7 @@
 # 3. Stores the face encodings in a MySQL db
 # 4. Then loads those encodings and uses them to train a recognition model
 # 5. Finally runs live recognition using the Pi cam, sending door commands via command.txt
+# 6. Can also record a 5‑minute video with recognition active
 
 # Dependencies:
 # pip install face_recognition opencv-python mysql-connector-python pyftpdlib
@@ -31,6 +32,7 @@ def send_command(cmd):
     with open(COMMAND_FILE, "w") as f:
         f.write(str(cmd))
 
+
 # Some config stuff
 FTP_USER = "pi"
 FTP_PASSWORD = "raspberry"
@@ -44,6 +46,7 @@ DB_CONFIG = {
 KNOWN_USERS_DIR = "known_users"
 UNKNOWN_DIR = "unknown_people"
 
+
 # helper fn: rotates image based on angle we give it
 def rotate_image(image, angle):
     if angle == 0:
@@ -54,6 +57,7 @@ def rotate_image(image, angle):
         return cv2.rotate(image, cv2.ROTATE_180)
     elif angle == 270:
         return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
 
 # Step 1: Start FTP server to accept uploaded videos
 def start_ftp_server():
@@ -66,6 +70,7 @@ def start_ftp_server():
     print("[INFO] FTP Server started on port 2121...")
     server.serve_forever()
 
+
 # Step 2: takes a video and tries to pull face encodings from it
 def extract_encodings_from_video(video_path, user_id):
     person_name = os.path.splitext(os.path.basename(video_path))[0]
@@ -77,9 +82,7 @@ def extract_encodings_from_video(video_path, user_id):
         return
 
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    print(f"[DEBUG] Total frames in video: {frame_count}")
-
-    interval = max(frame_count // 20, 1)  # just grab some frames every few
+    interval = max(frame_count // 20, 1)
     saved = 0
 
     for i in range(0, frame_count, interval):
@@ -90,30 +93,25 @@ def extract_encodings_from_video(video_path, user_id):
             continue
 
         rotations = [0, 90, 180, 270]
-        found_face = False
-
-        for angle in rotations:  # try diff rotations cuz sometimes cam is weird
+        for angle in rotations:
             rotated = rotate_image(frame, angle)
             rgb = cv2.cvtColor(rotated, cv2.COLOR_BGR2RGB)
-            face_locations = face_recognition.face_locations(rgb)
-            if face_locations:
-                found_face = True
-                encodings = face_recognition.face_encodings(rgb, face_locations)
-                print(f"[DEBUG] Frame {i} (rotated {angle}°): Found {len(encodings)} encoding(s)")
-                for encoding in encodings:
-                    store_face_encoding(user_id, person_name, encoding)
+            locs = face_recognition.face_locations(rgb)
+            if locs:
+                encs = face_recognition.face_encodings(rgb, locs)
+                print(f"[DEBUG] Frame {i} (rotated {angle}°): Found {len(encs)} encoding(s)")
+                for enc in encs:
+                    store_face_encoding(user_id, person_name, enc)
                     saved += 1
                 break
 
-        if not found_face:
-            print(f"[DEBUG] Frame {i}: No face found in any rotation.")
-
         if saved >= 20:
-            break  # that's enough for now
+            break
 
     cap.release()
     print(f"[INFO] Stored {saved} encodings for {person_name}")
-    
+
+
 # Step 3: saves an encoding into the MySQL DB
 def store_face_encoding(user_id, profile_name, encoding):
     conn = None
@@ -137,6 +135,7 @@ def store_face_encoding(user_id, profile_name, encoding):
         if conn:
             conn.close()
 
+
 # Step 4: load all encodings+names from db so we can recognize later
 def fetch_all_encodings():
     conn = mysql.connector.connect(**DB_CONFIG)
@@ -153,8 +152,9 @@ def fetch_all_encodings():
     conn.close()
     return encodings, names
 
+
 # Step 5: this does real-time recognition using PiCam,
-#         and sends known/door commands via command.txt
+#         annotates known (green) vs unknown (red), and sends commands
 def live_recognition():
     print("[INFO] Fetching encodings from DB...")
     known_face_encodings, known_face_names = fetch_all_encodings()
@@ -172,19 +172,18 @@ def live_recognition():
 
     while True:
         frame = picam2.capture_array()
-        small_frame = cv2.resize(frame, (0, 0), fx=1/cv_scaler, fy=1/cv_scaler)
-        rgb_small = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+        small = cv2.resize(frame, (0, 0), fx=1/cv_scaler, fy=1/cv_scaler)
+        rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
 
-        face_locations = face_recognition.face_locations(rgb_small)
-        face_encodings = face_recognition.face_encodings(rgb_small, face_locations)
+        locs = face_recognition.face_locations(rgb_small)
+        encs = face_recognition.face_encodings(rgb_small, locs)
 
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+        for (top, right, bottom, left), enc in zip(locs, encs):
+            matches = face_recognition.compare_faces(known_face_encodings, enc)
             name = "Unknown"
-
             if known_face_encodings:
-                distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-                best_idx = np.argmin(distances)
+                dists = face_recognition.face_distance(known_face_encodings, enc)
+                best_idx = np.argmin(dists)
                 if matches[best_idx]:
                     name = known_face_names[best_idx]
 
@@ -197,27 +196,23 @@ def live_recognition():
             if name == "Unknown":
                 # draw red box + label for unknown only
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-                cv2.putText(
-                    frame, name, (left + 6, top - 6),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
-                )
+                cv2.putText(frame, name, (left + 6, top - 6),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             else:
                 # draw green box + name for known faces
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
-                cv2.putText(
-                    frame, name, (left + 6, top - 6),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
-                )
+                cv2.putText(frame, name, (left + 6, top - 6),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-                
+              
                 #  Code to send "Known Face" command to middleman
-               
+                
                 send_command(3)
                 time.sleep(0.1)
 
-               
+                
                 #  Code to send "Open door" command to middleman
-               
+                
                 send_command(1)
 
                 # automatic door close after 5 seconds
@@ -231,7 +226,74 @@ def live_recognition():
     picam2.stop()
 
 
-# Step 6: Just grabs the latest vid from the FTP dir and processes it
+#  Step 6: Code to record 5‑minute video with live recognition active
+
+def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
+    print(f"[INFO] Recording {duration//60}‑minute video with active recognition...")
+    known_face_encodings, known_face_names = fetch_all_encodings()
+
+    picam2 = Picamera2()
+    config = picam2.create_video_configuration(
+        main={"format": 'XRGB8888', "size": (640, 480)}
+    )
+    picam2.configure(config)
+    picam2.start()
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = 30
+    out = cv2.VideoWriter(output_path, fourcc, fps, (640, 480))
+
+    start_time = time.time()
+    cv_scaler = 4
+
+    while time.time() - start_time < duration:
+        frame = picam2.capture_array()
+
+        small = cv2.resize(frame, (0, 0), fx=1/cv_scaler, fy=1/cv_scaler)
+        rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+
+        locs = face_recognition.face_locations(rgb_small)
+        encs = face_recognition.face_encodings(rgb_small, locs)
+
+        for (top, right, bottom, left), enc in zip(locs, encs):
+            matches = face_recognition.compare_faces(known_face_encodings, enc)
+            name = "Unknown"
+            if known_face_encodings:
+                dists = face_recognition.face_distance(known_face_encodings, enc)
+                best_idx = np.argmin(dists)
+                if matches[best_idx]:
+                    name = known_face_names[best_idx]
+
+            top    *= cv_scaler
+            right  *= cv_scaler
+            bottom *= cv_scaler
+            left   *= cv_scaler
+
+            color = (0,255,0) if name != "Unknown" else (0,0,255)
+            cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+            cv2.putText(frame, name, (left + 6, top - 6),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+            if name != "Unknown":
+                send_command(3)
+                time.sleep(0.1)
+                send_command(1)
+                threading.Timer(5, lambda: send_command(2)).start()
+
+        out.write(frame)
+        cv2.imshow("Recording with Recognition", frame)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+    out.release()
+    picam2.stop()
+    cv2.destroyAllWindows()
+    print(f"[INFO] Saved video to {output_path}")
+
+
+
+#  Step 7: Main processing of latest uploaded video
+
 def process_latest_video(user_id):
     video_files = [f for f in os.listdir(FTP_DIR) if f.endswith(".mp4")]
     if not video_files:
@@ -242,13 +304,16 @@ def process_latest_video(user_id):
     print(f"[DEBUG] Found latest video: {full_path}")
     extract_encodings_from_video(full_path, user_id)
 
-# Step 7: menu to use the app. simple loop
+
+#  Step 8: Interactive menu: process / recognize / record / exit
+
 def main():
     threading.Thread(target=start_ftp_server, daemon=True).start()
     while True:
         print("\n[1] Process Latest Video")
-        print("[2] Start Live Recognition")
-        print("[3] Exit")
+        print("[2] Start Facial Recognition Only")
+        print("[3] Record 5‑Minute Video with Recognition")
+        print("[4] Exit")
         choice = input("Choose an option: ").strip()
         if choice == '1':
             uid = input("Enter user_id to associate encodings: ").strip()
@@ -256,9 +321,12 @@ def main():
         elif choice == '2':
             live_recognition()
         elif choice == '3':
+            record_and_recognize()
+        elif choice == '4':
             break
         else:
             print("Invalid choice.")
+
 
 if __name__ == "__main__":
     main()
