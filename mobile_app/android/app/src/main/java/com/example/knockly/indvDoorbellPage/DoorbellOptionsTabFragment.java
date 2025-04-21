@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -18,6 +19,9 @@ import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
 import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.snackbar.Snackbar;
+
+import org.json.JSONObject;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,7 +35,8 @@ public class DoorbellOptionsTabFragment extends Fragment {
 
     private String mDoorbellID;
     private boolean tabMinimised = false;
-  
+    private JSONObject permissions;
+
     public DoorbellOptionsTabFragment() {
         // Required empty public constructor
     }
@@ -56,6 +61,20 @@ public class DoorbellOptionsTabFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mDoorbellID = getArguments().getString(ARG_BELL_ID);
+        }
+
+        //TODO: Implement actual API call (in main activity?)
+        try {
+            permissions = new JSONObject();
+            permissions.put("manageUsers", true);
+            permissions.put("manageFaces", false);
+            permissions.put("manageDoorbell", true);
+            permissions.put("viewFeedHistory", false);
+            permissions.put("viewDoorbellLogs", true);
+        }
+        catch(Exception e) {
+            System.out.println("Error getting user permissions:");
+            System.out.println(e);
         }
     }
 
@@ -82,17 +101,38 @@ public class DoorbellOptionsTabFragment extends Fragment {
                 DoorbellLogsActivity.class
         };
 
+        final String[] permissionNames = {
+                "manageUsers",
+                "manageFaces",
+                "manageDoorbell",
+                "viewFeedHistory",
+                "viewDoorbellLogs"
+        };
+
         for (int m = 0; m < buttons.length; m++){
             Button currentButton = buttons[m];
-            Class currentActivity = destinationActivites[m];
-            currentButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getActivity(), currentActivity);
-                    intent.putExtra("Doorbell_ID", mDoorbellID);
-                    startActivity(intent);
-                }
-            });
+
+            if (permissions.optBoolean(permissionNames[m])){
+                Class currentActivity = destinationActivites[m];
+                currentButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(getActivity(), currentActivity);
+                        intent.putExtra("Doorbell_ID", mDoorbellID);
+                        startActivity(intent);
+                    }
+                });
+            }
+            else{
+                currentButton.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.grey));
+                currentButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Snackbar.make(view, "You don't have permission to access this page. Please contact the admin if you need to change this.", Snackbar.LENGTH_SHORT).show();
+
+                    }
+                });
+            }
         }
 
         // Make minimise/expand button function
