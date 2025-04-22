@@ -6,3 +6,5 @@ passlib[bcrypt]==1.7.4
 python-jose==3.3.0
 python-multipart==0.0.9
 pyotp==2.9.0           # TOTP 2‑factor
+qrcode[pil]==7.4.2
+pydantic[email]
