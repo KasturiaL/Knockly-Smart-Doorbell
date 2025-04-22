@@ -4,4 +4,14 @@
     <string name="createAccountLink"><u>Don\'t have an account? Click here to create one</u></string>
     <string name="resetPassLink"><u>Forgot Password? Click here to reset it</u></string>
     <string name="homePageDoorbellSubTitle">Your Doorbells:</string>
+    <string name="buttonMinimiseOptionsTitle">Click to Minimise</string>
+    <string name="buttonExpandOptionsTitle">Click to Expand</string>
+    <string name="buttonFeedHistoryTitle">Feed History</string>
+    <string name="buttonDoorbellLogsTitle">Doorbell Logs</string>
+    <string name="buttonMangeUsersTitle">Manage Users</string>
+    <string name="buttonManageFacesTitle">Manage Faces</string>
+    <string name="buttonManageDoorbellTitle">Manage Doorbell</string>
+    <string name="doorStatusClosedMsg">Door Closed</string>
+    <string name="doorStatusOpenMsg">Door Open</string>
+
 </resources>
