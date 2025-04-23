@@ -142,3 +142,18 @@ async def set_override(doorbell_id: int,
         raise HTTPException(404, "Unknown permission")
     return {"ok": True}
 
+# ---------- FACE PROFILES (optional) -------------------------
+@app.get("/doorbells/{bell_id}/faces", response_model=list[schemas.FaceProfileOut])
+async def bell_faces(bell_id: int,
+                     me: models.User = Depends(current_user),
+                     db: AsyncSession = Depends(database.get_session)):
+    return await crud.list_faces(db, doorbell_id=bell_id)
+
+@app.patch("/faces/{face_id}/block")
+async def block_face(face_id: int, block: bool = True,
+                     me: models.User = Depends(current_user),
+                     db: AsyncSession = Depends(database.get_session)):
+    fp = await crud.set_face_blocked(db, face_id=face_id, blocked=block)
+    if not fp:
+        raise HTTPException(404, "face not found")
+    return {"face_id": face_id, "is_blocked": fp.is_blocked}

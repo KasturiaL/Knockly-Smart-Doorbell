@@ -125,3 +125,30 @@ async def set_override(
         db.add(override)
     await db.commit()
     return True
+
+# ---------- face profile helpers (NEW) ----------
+async def list_faces(db: AsyncSession, *, doorbell_id: int) -> List[models.FaceProfile]:
+    stmt = select(models.FaceProfile).where(models.FaceProfile.doorbell_id == doorbell_id)
+    res = await db.execute(stmt)
+    return res.scalars().all()
+
+async def add_face(db: AsyncSession, *, doorbell_id: int,
+                   face_data: bytes, name: str | None):
+    fp = models.FaceProfile(
+        doorbell_id=doorbell_id,
+        face_data=face_data,
+        face_profile_name=name,
+    )
+    db.add(fp)
+    await db.commit()
+    await db.refresh(fp)
+    return fp
+
+async def set_face_blocked(db: AsyncSession, *, face_id: int, blocked: bool):
+    fp = await db.get(models.FaceProfile, face_id)
+    if not fp:
+        return None
+    fp.is_blocked = blocked
+    await db.commit()
+    return fp
+
