@@ -1,0 +1,13 @@
+import os, secrets
+
+DB_CONFIG = dict(
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER", "door_user"),
+    password=os.getenv("DB_PASS", "door_user_door_user"),
+    database=os.getenv("DB_NAME", "smart_door_db"),
+    port=int(os.getenv("DB_PORT", 3306)),
+)
+
+JWT_SECRET      = os.getenv("JWT_SECRET", secrets.token_hex(32))
+JWT_ALGORITHM   = "HS256"
+JWT_EXP_MINUTES = 60 * 24 * 7  # 1 week
