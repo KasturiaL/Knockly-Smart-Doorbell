@@ -1,0 +1,159 @@
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
+from jose import jwt, JWTError
+from sqlalchemy.ext.asyncio import AsyncSession
+import pyotp, qrcode, io, base64                     # for QR URL (optional)
+
+import database, crud, schemas, security, models
+from config import JWT_SECRET, JWT_ALGORITHM
+
+app = FastAPI(title="SmartDoor API (full)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # LAN only – tighten later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+oauth2 = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+# ------------ helpers -------------
+async def current_user(token: str = Depends(oauth2),
+                       db: AsyncSession = Depends(database.get_session)) -> models.User:
+    cred_exc = HTTPException(status_code=401, detail="Invalid credentials",
+                             headers={"WWW-Authenticate": "Bearer"})
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        uid = payload.get("sub")
+        if uid is None:
+            raise cred_exc
+    except JWTError:
+        raise cred_exc
+    user = await db.get(models.User, uid)
+    if not user:
+        raise cred_exc
+    return user
+
+# -------- AUTH ------------------------------------------------
+@app.post("/auth/register", response_model=schemas.Token, status_code=201)
+async def register(inp: schemas.UserCreate,
+                   db: AsyncSession = Depends(database.get_session)):
+    if await crud.get_user_by_username(db, inp.username):
+        raise HTTPException(400, "Username taken")
+    if await crud.get_user_by_email(db, inp.email):
+        raise HTTPException(400, "Email already used")
+    user = await crud.create_user(db, username=inp.username,
+                                       email=inp.email,
+                                       password=inp.password,
+                                       display_name=inp.display_name)
+    token = security.create_token({"sub": user.user_id})
+    return {"access_token": token}
+
+@app.post("/auth/login", response_model=schemas.Token)
+async def login(inp: schemas.UserLogin,
+                db: AsyncSession = Depends(database.get_session)):
+    user = await crud.authenticate(db, inp.username_or_email, inp.password)
+    if not user:
+        raise HTTPException(401, "Bad username/email or password")
+    # if 2FA enabled verify TOTP
+    if user.settings.enable_2fa:
+        if not inp.totp_code or not user.twofa:
+            raise HTTPException(401, "TOTP required")
+        if not security.verify_totp(user.twofa.secret, inp.totp_code):
+            raise HTTPException(401, "Invalid TOTP")
+    token = security.create_token({"sub": user.user_id})
+    return {"access_token": token}
+
+# ---------- 2‑FA mgmt (opt‑in) ---------------- 
+@app.post("/auth/2fa/setup")
+async def setup_2fa(me: models.User = Depends(current_user),
+                    db: AsyncSession = Depends(database.get_session)):
+    if me.twofa:
+        raise HTTPException(400, "2FA already set")
+    secret = security.new_totp_secret()
+    db.add(models.User2FASecret(user_id=me.user_id, secret=secret))
+    me.settings.enable_2fa = True
+    await db.commit()
+    # return otpauth:// URL + QR in base64 (easier for apps)
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=me.email, issuer_name="SmartDoor")
+    img = qrcode.make(uri)
+    buf = io.BytesIO(); img.save(buf, format="PNG")
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    return {"otpauth_uri": uri, "qr_base64png": b64}
+
+@app.post("/auth/2fa/disable")
+async def disable_2fa(code: str,
+                      me: models.User = Depends(current_user),
+                      db: AsyncSession = Depends(database.get_session)):
+    if not me.twofa or not me.settings.enable_2fa:
+        raise HTTPException(400, "2FA not enabled")
+    if not security.verify_totp(me.twofa.secret, code):
+        raise HTTPException(401, "Bad TOTP")
+    await db.delete(me.twofa)
+    me.settings.enable_2fa = False
+    await db.commit()
+    return {"disabled": True}
+
+# ---------- USERS -------------------------------------------
+@app.get("/users/me", response_model=schemas.UserOut)
+async def read_me(me: models.User = Depends(current_user)):
+    return me
+
+@app.get("/users/me/settings", response_model=schemas.UserSettingsOut)
+async def read_settings(me: models.User = Depends(current_user)):
+    return me.settings
+
+# ---------- DOORBELLS ---------------------------------------
+@app.get("/doorbells", response_model=list[schemas.DoorbellOut])
+async def my_bells(me: models.User = Depends(current_user),
+                   db: AsyncSession = Depends(database.get_session)):
+    return await crud.list_user_doorbells(db, me.user_id)
+
+# ---------- PERMISSIONS (read + override) ------------------- 
+@app.get("/doorbells/{doorbell_id}/permissions",
+         response_model=list[schemas.PermCheckResponse])
+async def my_perms(doorbell_id: int,
+                   me: models.User = Depends(current_user),
+                   db: AsyncSession = Depends(database.get_session)):
+    names = await crud.effective_permissions(db, user_id=me.user_id, doorbell_id=doorbell_id)
+    all_perms = (await db.execute(select(models.Permission))).scalars().all()
+    return [schemas.PermCheckResponse(permission=p.permission_name,
+                                      granted=p.permission_name in names)
+            for p in all_perms]
+
+@app.patch("/doorbells/{doorbell_id}/permissions/override")
+async def set_override(doorbell_id: int,
+                       body: schemas.OverrideSet,
+                       me: models.User = Depends(current_user),
+                       db: AsyncSession = Depends(database.get_session)):
+    # only users with 'manage_roles_and_perms' may override others
+    eff = await crud.effective_permissions(db, user_id=me.user_id, doorbell_id=doorbell_id)
+    if "manage_roles_and_perms" not in eff:
+        raise HTTPException(403, "Need 'manage_roles_and_perms'")
+    # find target user id in query param ?user_id=xxx else self
+    target_id = me.user_id
+    success = await crud.set_override(db, user_id=target_id,
+                                           perm_name=body.permission_name,
+                                           is_granted=body.is_granted)
+    if not success:
+        raise HTTPException(404, "Unknown permission")
+    return {"ok": True}
+
+# ---------- FACE PROFILES (optional) -------------------------
+@app.get("/doorbells/{bell_id}/faces", response_model=list[schemas.FaceProfileOut])
+async def bell_faces(bell_id: int,
+                     me: models.User = Depends(current_user),
+                     db: AsyncSession = Depends(database.get_session)):
+    return await crud.list_faces(db, doorbell_id=bell_id)
+
+@app.patch("/faces/{face_id}/block")
+async def block_face(face_id: int, block: bool = True,
+                     me: models.User = Depends(current_user),
+                     db: AsyncSession = Depends(database.get_session)):
+    fp = await crud.set_face_blocked(db, face_id=face_id, blocked=block)
+    if not fp:
+        raise HTTPException(404, "face not found")
+    return {"face_id": face_id, "is_blocked": fp.is_blocked}
