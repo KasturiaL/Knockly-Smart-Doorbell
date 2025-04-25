@@ -16,10 +16,10 @@ import face_rec  # assumes face_rec.py is in the same directory
 # Port variables
 my_pc_port = "COM9"
 lab_port   = "COM4"
-pi_port    = "placeholder"
+pi_port    = "/dev/ttyACM0"
 
 # Paths
-directory    = Path(_file_).parent
+directory    = Path(__file__).parent
 log_file     = directory / "log.txt"
 command_file = directory / "command.txt"
 
