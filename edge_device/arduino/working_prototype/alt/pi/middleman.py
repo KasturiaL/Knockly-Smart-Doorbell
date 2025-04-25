@@ -23,8 +23,8 @@ directory    = Path(__file__).parent
 log_file     = directory / "log.txt"
 command_file = directory / "command.txt"
 
-# Arduino serial setup
-arduino = serial.Serial(my_pc_port, baudrate=9600, timeout=0.1)
+# Setup Arduino serial
+arduino = serial.Serial(pi_port, baudrate=9600, timeout=0.1)
 
 # Flag to prevent retriggering while recording is active
 recording_active = False
@@ -46,7 +46,7 @@ def check_command():
 
 def log(msg):
     """Append msg to log.txt with timestamp, and print it."""
-    now = datetime.datetime.now()
+    now   = datetime.datetime.now()
     entry = now.strftime("%x %X") + " | " + msg
     print(entry)
     with log_file.open("a") as f:
@@ -84,18 +84,11 @@ while True:
     if msg:
         log(f"Arduino → {msg}")
 
-        # 3) Trigger face_rec when Arduino reports a person
+        # 3) Trigger recording+recognition on first person detection
         if msg == "Object is a person.":
             if not recording_active:
                 recording_active = True
-                log("Triggering 5-minute live_recognition & record_and_recognize")
-
-                # start live recognition for 5 minutes
-                threading.Thread(
-                    target=face_rec.live_recognition,
-                    kwargs={"duration": 300},
-                    daemon=True
-                ).start()
+                log("Triggering 5-minute record_and_recognize")
 
                 # start 5-minute video recording + recognition
                 threading.Thread(
