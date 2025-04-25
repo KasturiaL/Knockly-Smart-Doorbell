@@ -1,122 +1,98 @@
+# middleman.py
 #########################################################
 #
 #  Main Code to communicate between Arduino, Pi and App
 #
 #########################################################
 
-
-# Importing libraries
 import serial
+import threading
 import datetime
 import time
 import os
 from pathlib import Path
+import face_rec  # assumes face_rec.py is in the same directory
 
 # Port variables
 my_pc_port = "COM9"
-lab_port = "COM4"
-pi_port = "placeholder"
+lab_port   = "COM4"
+pi_port    = "placeholder"
 
 # Getting directory
-directory = Path(__file__).parent
+directory    = Path(__file__).parent
 
 # Setting file path for log.txt
-log_file = directory / "log.txt"
+log_file     = directory / "log.txt"
 
 # Setting file to receive commands from
 command_file = directory / "command.txt"
 
 # Setting up Arduino connection
-arduino = serial.Serial(my_pc_port, baudrate=9600, timeout=.1)
+arduino = serial.Serial(my_pc_port, baudrate=9600, timeout=0.1)
 
-# Debugging
 print("Listening for log messages...")
 
-# Function to read from arduino Serial
 def read():
-    # Reading and cleaning data
+    """Read and return a line from Arduino serial, or None if empty."""
     data = arduino.readline().decode('utf-8').strip()
+    return data if data else None
 
-    # Returning data if there is data sent
-    if data:
-        return data
-    else:
-        return None
-
-# Function to check for commands from command_file
 def check_command():
-    # Check if command_file exists
-    if command_file.is_file(): # Exists
-
-        # Opens command_file
-        with command_file.open('r') as f:
-
-            # Reads the data in command_file
-            command = f.read().strip()
-
-        # Removes command_file from file directory to better visability
-        os.remove(command_file)
-
-        # Returns command
-        return command
-    
-    # Returns nothing is there is no command_file
+    """If command_file exists, read & remove it, then return its contents."""
+    if command_file.is_file():
+        cmd = command_file.read_text().strip()
+        command_file.unlink()
+        return cmd
     return None
 
 def log(msg):
-    # Opening log.txt
+    """Append msg to log.txt with timestamp, and print it."""
+    now = datetime.datetime.now()
+    entry = now.strftime("%x %X") + " | " + msg
+    print(entry)
     with log_file.open("a") as f:
-        # Getting current date and time
-        current = datetime.datetime.now()
-
-        # Setting date variable
-        date = current.strftime("%x")
-
-        # Setting time variable
-        time = current.strftime("%X")
-
-        # Debugging
-        print(date + " " + time + " | " + msg)
-
-        # Writing to log.txt
-        f.write(date + " " + time + " | " + msg + "\n")
-
-        # Instant write to log.txt
+        f.write(entry + "\n")
         f.flush()
 
-def command_check(command):
-    # Writes command to arduino
-    arduino.write(bytes(command, 'utf-8'))
-    
-    # Gives the system time to execute command
+def command_check(cmd):
+    """Send cmd to Arduino and log the action."""
+    arduino.write(bytes(cmd, 'utf-8'))
     time.sleep(0.05)
-
-    # Check which command was issues for logging purposes
-    if command == "1": # Open door
-        # Prints log entry
+    if   cmd == "1":
         log("Phone has opened the door.")
-    elif command == "2": # Close door
-        # Prints log entry
+    elif cmd == "2":
         log("Phone has closed the door.")
-    elif command == "3": # Known face detected
-        # Prints log entry
+    elif cmd == "3":
         log("Known face detected.")
-    elif command == "4": # Blocked face detected
-        # Prints log entry
+    elif cmd == "4":
         log("Blocked face detected.")
 
 # Main Loop
 while True:
-    # Gets command from command_file
-    command = check_command()
+    # 1) Handle any phone‐initiated commands
+    cmd = check_command()
+    if cmd:
+        command_check(cmd)
 
-    # Checks if there is a command
-    if command: # There is a command
-        command_check(command)
-        
-    # Reading Serial message from arduino
+    # 2) Read any serial messages from Arduino
     log_msg = read()
-
-    # Check if there is message
-    if log_msg != None: # Message
+    if log_msg:
         log(log_msg)
+
+        # 3) Trigger face_rec when Arduino reports a person
+        if log_msg == "Object is a person.":
+            log("Triggering live_recognition and record_and_recognize for 5 minutes")
+            # start live recognition for 5 minutes
+            threading.Thread(
+                target=face_rec.live_recognition,
+                kwargs={"duration": 300},
+                daemon=True
+            ).start()
+            # start 5-minute recording + recognition
+            threading.Thread(
+                target=face_rec.record_and_recognize,
+                kwargs={"duration": 300},
+                daemon=True
+            ).start()
+
+    time.sleep(0.01)
