@@ -1,3 +1,4 @@
+# face_rec.py
 # full Python setup for the Raspberry Pi side of the facial recognition 
 # What this does:
 # 1. Runs an FTP server to grab incoming vids
@@ -6,27 +7,20 @@
 # 4. Then loads those encodings and uses them to train a recognition model
 # 5. Finally runs live recognition using the Pi cam, sending door commands via command.txt
 # 6. Can also record a 5-minute video with recognition active
+# 7. Provides a simple menu to trigger processing / recognition / recording
 
 # Dependencies:
 # pip install face_recognition opencv-python mysql-connector-python pyftpdlib
 # sudo apt install libmysqlclient-dev
 
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import FTPHandler
-from pyftpdlib.servers import FTPServer
-import threading
-import os
-import cv2
-import face_recognition
-import mysql.connector
-import pickle
-import time
-import numpy as np
-from picamera2 import Picamera2
+from pyftpdlib.handlers    import FTPHandler
+from pyftpdlib.servers     import FTPServer
+import threading, os, cv2, time, pickle, mysql.connector, face_recognition, numpy as np
+from picamera2             import Picamera2
 
 # file used by the Arduino-Pi middleman to pick up commands
 COMMAND_FILE = "command.txt"
-
 def send_command(cmd):
     """Write a single-digit command into command.txt for the Arduino."""
     with open(COMMAND_FILE, "w") as f:
@@ -37,17 +31,15 @@ MIN_VIDEO_DURATION   = 15    # seconds
 BRIGHTNESS_THRESHOLD = 32    # mean gray value, 0–255
 
 # Some config stuff
-FTP_USER        = "pi"
-FTP_PASSWORD    = "raspberry"
-FTP_DIR         = "ftp_videos"
-DB_CONFIG       = {
+FTP_USER     = "pi"
+FTP_PASSWORD = "raspberry"
+FTP_DIR      = "ftp_videos"
+DB_CONFIG    = {
     "host":     "localhost",
     "user":     "door_user",
     "password": "door_user_door_user",
     "database": "smart_door_db"
 }
-KNOWN_USERS_DIR = "known_users"
-UNKNOWN_DIR     = "unknown_people"
 
 # helper fn: rotates image based on angle we give it
 def rotate_image(image, angle):
@@ -57,7 +49,7 @@ def rotate_image(image, angle):
         return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     elif angle == 180:
         return cv2.rotate(image, cv2.ROTATE_180)
-    elif angle == 270:
+    else:
         return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 # Step 1: Start FTP server to accept uploaded videos
@@ -98,8 +90,7 @@ def extract_encodings_from_video(video_path, user_id):
     gray             = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     mean_brightness  = gray.mean()
     if mean_brightness < BRIGHTNESS_THRESHOLD:
-        print(f"[ERROR] Video too dark (avg brightness {mean_brightness:.1f}). "
-              f"Please record in better lighting.")
+        print(f"[ERROR] Video too dark (avg brightness {mean_brightness:.1f}). Please record in better lighting.")
         cap.release()
         return
 
@@ -177,7 +168,7 @@ def fetch_all_encodings():
 
 # Step 5: this does real-time recognition using PiCam,
 #         annotates known (green) vs unknown (red), and sends commands
-def live_recognition():
+def live_recognition(duration=None):
     print("[INFO] Fetching encodings from DB...")
     known_face_encodings, known_face_names = fetch_all_encodings()
 
@@ -191,8 +182,12 @@ def live_recognition():
     print("[INFO] Starting live recognition. Press 'q' to quit.")
 
     cv_scaler = 4  # downsize for speed
+    start_time = time.time()
 
     while True:
+        if duration and (time.time() - start_time) >= duration:
+            break
+
         frame     = picam2.capture_array()
         small     = cv2.resize(frame, (0, 0), fx=1/cv_scaler, fy=1/cv_scaler)
         rgb_small = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
@@ -222,23 +217,9 @@ def live_recognition():
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
                 cv2.putText(frame, name, (left+6, top-6),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-                #########################################################
-                #
-                #  Code to send "Known Face" command to middleman
-                #
-                #########################################################
-                send_command(3)
-                time.sleep(0.1)
-
-                #########################################################
-                #
-                #  Code to send "Open door" command to middleman
-                #
-                #########################################################
+                # Known face → send open‐door commands
+                send_command(3); time.sleep(0.1)
                 send_command(1)
-
-                # automatic door close after 5 seconds
                 threading.Timer(5, lambda: send_command(2)).start()
 
         cv2.imshow("Facial Recognition", frame)
@@ -295,8 +276,7 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
             if name != "Unknown":
-                send_command(3)
-                time.sleep(0.1)
+                send_command(3); time.sleep(0.1)
                 send_command(1)
                 threading.Timer(5, lambda: send_command(2)).start()
 
@@ -321,12 +301,12 @@ def process_latest_video(user_id):
     print(f"[DEBUG] Found latest video: {full_path}")
     extract_encodings_from_video(full_path, user_id)
 
-# Step 8: menu to use the app. simple loop, with process/recognize/record/exit
+# Step 8: menu to use the app. simple loop
 def main():
     threading.Thread(target=start_ftp_server, daemon=True).start()
     while True:
         print("\n[1] Process Latest Video")
-        print("[2] Start Facial Recognition Only")
+        print("[2] Start Live Recognition")
         print("[3] Record 5-Minute Video with Recognition")
         print("[4] Exit")
         choice = input("Choose an option: ").strip()
@@ -334,9 +314,9 @@ def main():
             uid = input("Enter user_id to associate encodings: ").strip()
             process_latest_video(uid)
         elif choice == '2':
-            live_recognition()
+            live_recognition(duration=None)
         elif choice == '3':
-            record_and_recognize()
+            record_and_recognize(duration=300)
         elif choice == '4':
             break
         else:
