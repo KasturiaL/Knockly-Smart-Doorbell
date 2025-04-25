@@ -9,35 +9,43 @@ import serial
 import threading
 import datetime
 import time
-import os
 from pathlib import Path
 import face_rec  # assumes face_rec.py is in the same directory
 
-# Port variables
-my_pc_port = "COM9"
-lab_port   = "COM4"
-pi_port    = "/dev/ttyACM0"
+# ——————————————————————————————————————————————————————
+# Configuration
+# ——————————————————————————————————————————————————————
+my_pc_port   = "COM9"       # adjust as needed
+lab_port = "COM4"
+pi_port = "/dev/ttyACM0"
+baud_rate    = 9600
+timeout_s    = 0.1
 
-# Paths
 directory    = Path(__file__).parent
 log_file     = directory / "log.txt"
 command_file = directory / "command.txt"
 
+# ——————————————————————————————————————————————————————
 # Setup Arduino serial
-arduino = serial.Serial(pi_port, baudrate=9600, timeout=0.1)
-
-# Flag to prevent retriggering while recording is active
-recording_active = False
-
+# ——————————————————————————————————————————————————————
+arduino = serial.Serial(pi_port, baudrate=baud_rate, timeout=timeout_s)
 print("Listening for log messages...")
 
+# ——————————————————————————————————————————————————————
+# State
+# ——————————————————————————————————————————————————————
+record_thread = None
+
+# ——————————————————————————————————————————————————————
+# Helpers
+# ——————————————————————————————————————————————————————
 def read():
-    """Read and return a line from Arduino serial, or None if empty."""
-    data = arduino.readline().decode('utf-8').strip()
-    return data if data else None
+    """Non-blocking read from Arduino serial. Returns str or None."""
+    line = arduino.readline().decode('utf-8', errors='ignore').strip()
+    return line if line else None
 
 def check_command():
-    """If command_file exists, read & remove it, then return its contents."""
+    """Check for phone commands dropped into command.txt."""
     if command_file.is_file():
         cmd = command_file.read_text().strip()
         command_file.unlink()
@@ -45,61 +53,50 @@ def check_command():
     return None
 
 def log(msg):
-    """Append msg to log.txt with timestamp, and print it."""
-    now   = datetime.datetime.now()
-    entry = now.strftime("%x %X") + " | " + msg
+    """Timestamp + append to log.txt + print."""
+    now   = datetime.datetime.now().strftime("%x %X")
+    entry = f"{now} | {msg}"
     print(entry)
     with log_file.open("a") as f:
         f.write(entry + "\n")
         f.flush()
 
 def command_check(cmd):
-    """Send cmd to Arduino and log the action."""
-    arduino.write(bytes(cmd, 'utf-8'))
+    """Forward phone command to Arduino and log it."""
+    arduino.write(cmd.encode())
     time.sleep(0.05)
-    if   cmd == "1":
-        log("Phone has opened the door.")
-    elif cmd == "2":
-        log("Phone has closed the door.")
-    elif cmd == "3":
-        log("Known face detected.")
-    elif cmd == "4":
-        log("Blocked face detected.")
+    if   cmd == "1": log("Phone has opened the door.")
+    elif cmd == "2": log("Phone has closed the door.")
+    elif cmd == "3": log("Known face detected.")
+    elif cmd == "4": log("Blocked face detected.")
 
-def reset_recording_flag():
-    """Called after the 5-minute window to allow retriggering."""
-    global recording_active
-    recording_active = False
-    log("Recording window ended; ready for next trigger.")
-
+# ——————————————————————————————————————————————————————
 # Main Loop
+# ——————————————————————————————————————————————————————
 while True:
-    # 1) Handle any phone‐initiated commands
+    # 1) Handle any phone-initiated commands
     cmd = check_command()
     if cmd:
         command_check(cmd)
 
-    # 2) Read any serial messages from Arduino
+    # 2) Read any messages from the Arduino
     msg = read()
     if msg:
         log(f"Arduino → {msg}")
 
-        # 3) Trigger recording+recognition on first person detection
+        # 3) When Arduino says "Object is a person.", start recording+recognition
         if msg == "Object is a person.":
-            if not recording_active:
-                recording_active = True
+            # if no thread running or it has finished, start a new one
+            if record_thread is None or not record_thread.is_alive():
                 log("Triggering 5-minute record_and_recognize")
-
-                # start 5-minute video recording + recognition
-                threading.Thread(
+                record_thread = threading.Thread(
                     target=face_rec.record_and_recognize,
                     kwargs={"duration": 300},
                     daemon=True
-                ).start()
-
-                # schedule flag reset after 5 minutes
-                threading.Timer(300, reset_recording_flag).start()
+                )
+                record_thread.start()
             else:
                 log("Recording in progress; trigger ignored.")
 
+    # tiny sleep to avoid busy-loop
     time.sleep(0.01)
