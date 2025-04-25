@@ -1,4 +1,4 @@
-# full Python setup for the Raspberry Pi side of the facial recognition 
+ # full Python setup for the Raspberry Pi side of the facial recognition 
 # What this does:
 # 1. Runs an FTP server to grab incoming vids
 # 2. Goes through those videos and pulls out faces (with validation)
@@ -6,6 +6,7 @@
 # 4. Then loads those encodings and uses them to train a recognition model
 # 5. Finally runs live recognition using the Pi cam, sending door commands via command.txt
 # 6. Can also record a 5-minute video with recognition active
+# 7. Watches for new videos and processes them automatically
 
 # Dependencies:
 # pip install face_recognition opencv-python mysql-connector-python pyftpdlib
@@ -26,7 +27,6 @@ from picamera2 import Picamera2
 
 # file used by the Arduino-Pi middleman to pick up commands
 COMMAND_FILE = "command.txt"
-
 def send_command(cmd):
     """Write a single-digit command into command.txt for the Arduino."""
     with open(COMMAND_FILE, "w") as f:
@@ -34,7 +34,7 @@ def send_command(cmd):
 
 # validation constants
 MIN_VIDEO_DURATION   = 15    # seconds
-BRIGHTNESS_THRESHOLD = 5    # mean gray value, 0–255
+BRIGHTNESS_THRESHOLD = 50    # mean gray value, 0–255
 
 # Some config stuff
 FTP_USER        = "pi"
@@ -95,11 +95,10 @@ def extract_encodings_from_video(video_path, user_id):
         print(f"[ERROR] Could not read first frame for brightness check.")
         cap.release()
         return
-    gray             = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    mean_brightness  = gray.mean()
+    gray            = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    mean_brightness = gray.mean()
     if mean_brightness < BRIGHTNESS_THRESHOLD:
-        print(f"[ERROR] Video too dark (avg brightness {mean_brightness:.1f}). "
-              f"Please record in better lighting.")
+        print(f"[ERROR] Video too dark (avg brightness {mean_brightness:.1f}). Please record in better lighting.")
         cap.release()
         return
 
@@ -183,9 +182,7 @@ def live_recognition():
 
     picam2 = Picamera2()
     picam2.configure(
-        picam2.create_preview_configuration(
-            main={"format": 'XRGB8888', "size": (640, 480)}
-        )
+        picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)})
     )
     picam2.start()
     print("[INFO] Starting live recognition. Press 'q' to quit.")
@@ -223,21 +220,11 @@ def live_recognition():
                 cv2.putText(frame, name, (left+6, top-6),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-                #########################################################
-                #
-                #  Code to send "Known Face" command to middleman
-                #
-                #########################################################
+                # Code to send "Known Face" command to middleman
                 send_command(3)
                 time.sleep(0.1)
-
-                #########################################################
-                #
-                #  Code to send "Open door" command to middleman
-                #
-                #########################################################
+                # Code to send "Open door" command to middleman
                 send_command(1)
-
                 # automatic door close after 5 seconds
                 threading.Timer(5, lambda: send_command(2)).start()
 
@@ -254,9 +241,7 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
     known_face_encodings, known_face_names = fetch_all_encodings()
 
     picam2 = Picamera2()
-    config = picam2.create_video_configuration(
-        main={"format": 'XRGB8888', "size": (640, 480)}
-    )
+    config = picam2.create_video_configuration(main={"format": 'XRGB8888', "size": (640, 480)})
     picam2.configure(config)
     picam2.start()
 
@@ -266,7 +251,6 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
 
     start_time = time.time()
     cv_scaler  = 4
-
     while time.time() - start_time < duration:
         frame     = picam2.capture_array()
         small     = cv2.resize(frame, (0, 0), fx=1/cv_scaler, fy=1/cv_scaler)
@@ -310,34 +294,45 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
     cv2.destroyAllWindows()
     print(f"[INFO] Saved video to {output_path}")
 
-# Step 7: Just grabs the latest vid from the FTP dir and processes it
-def process_latest_video(user_id):
-    video_files = [f for f in os.listdir(FTP_DIR) if f.endswith(".mp4")]
-    if not video_files:
-        print("[INFO] No videos found.")
-        return
-    latest_video = max(video_files, key=lambda x: os.path.getctime(os.path.join(FTP_DIR, x)))
-    full_path    = os.path.join(FTP_DIR, latest_video)
-    print(f"[DEBUG] Found latest video: {full_path}")
-    extract_encodings_from_video(full_path, user_id)
+# Step 7: helper to get next available user_id
+def get_next_user_id():
+    conn   = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("SELECT MAX(user_id) FROM face_profiles")
+    result = cursor.fetchone()
+    max_id = result[0] if result and result[0] is not None else 0
+    cursor.close()
+    conn.close()
+    return max_id + 1
 
-# Step 8: menu to use the app. simple loop, with process/recognize/record/exit
+# Step 8: watch for new videos and process them automatically
+processed_videos = set()
+def watch_and_auto_process(interval=5):
+    while True:
+        for fname in os.listdir(FTP_DIR):
+            if not fname.endswith(".mp4") or fname in processed_videos:
+                continue
+            full_path = os.path.join(FTP_DIR, fname)
+            print(f"[INFO] New video detected: {full_path} — auto-processing")
+            new_id = get_next_user_id()
+            extract_encodings_from_video(full_path, new_id)
+            processed_videos.add(fname)
+        time.sleep(interval)
+
+# Step 9: interactive menu: recognition only / record / exit
 def main():
     threading.Thread(target=start_ftp_server, daemon=True).start()
+    threading.Thread(target=watch_and_auto_process, daemon=True).start()
     while True:
-        print("\n[1] Process Latest Video")
-        print("[2] Start Facial Recognition Only")
-        print("[3] Record 5-Minute Video with Recognition")
-        print("[4] Exit")
+        print("\n[1] Start Facial Recognition Only")
+        print("[2] Record 5-Minute Video with Recognition")
+        print("[3] Exit")
         choice = input("Choose an option: ").strip()
         if choice == '1':
-            uid = input("Enter user_id to associate encodings: ").strip()
-            process_latest_video(uid)
-        elif choice == '2':
             live_recognition()
-        elif choice == '3':
+        elif choice == '2':
             record_and_recognize()
-        elif choice == '4':
+        elif choice == '3':
             break
         else:
             print("Invalid choice.")
