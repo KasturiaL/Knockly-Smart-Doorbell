@@ -1,4 +1,4 @@
- # full Python setup for the Raspberry Pi side of the facial recognition 
+# full Python setup for the Raspberry Pi side of the facial recognition 
 # What this does:
 # 1. Runs an FTP server to grab incoming vids
 # 2. Goes through those videos and pulls out faces (with validation)
@@ -73,7 +73,7 @@ def start_ftp_server():
 
 # Step 2: takes a video and tries to pull face encodings from it,
 #         but first validates length and brightness
-def extract_encodings_from_video(video_path, user_id):
+def extract_encodings_from_video(video_path, doorbell_id):
     print(f"[INFO] Validating video: {video_path}")
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -127,7 +127,7 @@ def extract_encodings_from_video(video_path, user_id):
                 encs = face_recognition.face_encodings(rgb, locs)
                 print(f"[DEBUG] Frame {i} (rotated {angle}°): Found {len(encs)} encoding(s)")
                 for enc in encs:
-                    store_face_encoding(user_id, person_name, enc)
+                    store_face_encoding(doorbell_id, person_name, enc)
                     saved += 1
                 break
 
@@ -138,20 +138,20 @@ def extract_encodings_from_video(video_path, user_id):
     print(f"[INFO] Stored {saved} encodings for {person_name}")
 
 # Step 3: saves an encoding into the MySQL DB
-def store_face_encoding(user_id, profile_name, encoding):
+def store_face_encoding(doorbell_id, profile_name, encoding):
     conn   = None
     cursor = None
     try:
         conn   = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
         query  = """
-            INSERT INTO face_profiles (user_id, face_profile_name, face_data)
+            INSERT INTO face_profiles (doorbell_id, face_profile_name, face_data)
             VALUES (%s, %s, %s)
         """
         data_blob = pickle.dumps(encoding)
-        cursor.execute(query, (user_id, profile_name, data_blob))
+        cursor.execute(query, (doorbell_id, profile_name, data_blob))
         conn.commit()
-        print(f"[DEBUG] Stored encoding for {profile_name} (user_id={user_id})")
+        print(f"[DEBUG] Stored encoding for {profile_name} (doorbell_id={doorbell_id})")
     except Exception as e:
         print(f"[DB ERROR] Failed to insert encoding: {e}")
     finally:
@@ -294,16 +294,16 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
     cv2.destroyAllWindows()
     print(f"[INFO] Saved video to {output_path}")
 
-# Step 7: helper to get next available user_id
-def get_next_user_id():
+# Step 7: helper to get next available doorbell_id
+def get_next_doorbell_id():
     conn   = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor()
-    cursor.execute("SELECT MAX(user_id) FROM face_profiles")
-    result = cursor.fetchone()
-    max_id = result[0] if result and result[0] is not None else 0
+    cursor.execute("SELECT MAX(doorbell_id) FROM face_profiles")
+    result    = cursor.fetchone()
+    max_dbid  = result[0] if result and result[0] is not None else 0
     cursor.close()
     conn.close()
-    return max_id + 1
+    return max_dbid + 1
 
 # Step 8: watch for new videos and process them automatically
 processed_videos = set()
@@ -314,7 +314,7 @@ def watch_and_auto_process(interval=5):
                 continue
             full_path = os.path.join(FTP_DIR, fname)
             print(f"[INFO] New video detected: {full_path} — auto-processing")
-            new_id = get_next_user_id()
+            new_id = get_next_doorbell_id()
             extract_encodings_from_video(full_path, new_id)
             processed_videos.add(fname)
         time.sleep(interval)
