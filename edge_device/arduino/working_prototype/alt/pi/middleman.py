@@ -23,16 +23,21 @@ directory    = Path(__file__).parent
 log_file     = directory / "log.txt"
 command_file = directory / "command.txt"
 
-# Setup Arduino serial
+# Arduino serial setup
 arduino = serial.Serial(my_pc_port, baudrate=9600, timeout=0.1)
+
+# Flag to prevent retriggering while recording is active
+recording_active = False
 
 print("Listening for log messages...")
 
 def read():
+    """Read and return a line from Arduino serial, or None if empty."""
     data = arduino.readline().decode('utf-8').strip()
     return data if data else None
 
 def check_command():
+    """If command_file exists, read & remove it, then return its contents."""
     if command_file.is_file():
         cmd = command_file.read_text().strip()
         command_file.unlink()
@@ -40,7 +45,8 @@ def check_command():
     return None
 
 def log(msg):
-    now   = datetime.datetime.now()
+    """Append msg to log.txt with timestamp, and print it."""
+    now = datetime.datetime.now()
     entry = now.strftime("%x %X") + " | " + msg
     print(entry)
     with log_file.open("a") as f:
@@ -48,32 +54,59 @@ def log(msg):
         f.flush()
 
 def command_check(cmd):
+    """Send cmd to Arduino and log the action."""
     arduino.write(bytes(cmd, 'utf-8'))
     time.sleep(0.05)
-    if   cmd == "1": log("Phone has opened the door.")
-    elif cmd == "2": log("Phone has closed the door.")
-    elif cmd == "3": log("Known face detected.")
-    elif cmd == "4": log("Blocked face detected.")
+    if   cmd == "1":
+        log("Phone has opened the door.")
+    elif cmd == "2":
+        log("Phone has closed the door.")
+    elif cmd == "3":
+        log("Known face detected.")
+    elif cmd == "4":
+        log("Blocked face detected.")
 
-# Main loop
+def reset_recording_flag():
+    """Called after the 5-minute window to allow retriggering."""
+    global recording_active
+    recording_active = False
+    log("Recording window ended; ready for next trigger.")
+
+# Main Loop
 while True:
-    # Handle phone‐initiated commands
+    # 1) Handle any phone‐initiated commands
     cmd = check_command()
     if cmd:
         command_check(cmd)
 
-    # Read Arduino serial
+    # 2) Read any serial messages from Arduino
     msg = read()
     if msg:
         log(f"Arduino → {msg}")
 
-        # Trigger only the recording+recognition function
+        # 3) Trigger face_rec when Arduino reports a person
         if msg == "Object is a person.":
-            log("Triggering 5-minute record+recognition")
-            threading.Thread(
-                target=face_rec.record_and_recognize,
-                kwargs={"duration": 300},
-                daemon=True
-            ).start()
+            if not recording_active:
+                recording_active = True
+                log("Triggering 5-minute live_recognition & record_and_recognize")
+
+                # start live recognition for 5 minutes
+                threading.Thread(
+                    target=face_rec.live_recognition,
+                    kwargs={"duration": 300},
+                    daemon=True
+                ).start()
+
+                # start 5-minute video recording + recognition
+                threading.Thread(
+                    target=face_rec.record_and_recognize,
+                    kwargs={"duration": 300},
+                    daemon=True
+                ).start()
+
+                # schedule flag reset after 5 minutes
+                threading.Timer(300, reset_recording_flag).start()
+            else:
+                log("Recording in progress; trigger ignored.")
 
     time.sleep(0.01)
