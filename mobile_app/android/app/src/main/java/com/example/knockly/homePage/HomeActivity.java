@@ -1,6 +1,10 @@
 package com.example.knockly.homePage;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -8,12 +12,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.knockly.loginPage.LoginActivity;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.R;
 import com.example.knockly.utils.JsonUtils;
+import com.example.knockly.utils.LoginManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.Objects;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -28,6 +36,25 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
+        // TODO: delete testing code
+        // Add test info to screen
+        LoginManager loginManager = LoginManager.getInstance(this);
+        TextView testText = findViewById(R.id.testTextHome);
+        String ID = loginManager.getCurrentUserID();
+        if (Objects.equals(ID, "")){
+            ID =  "Not logged in";
+        }
+        testText.setText(ID);
+        Button testButton = findViewById(R.id.testButtonHome);
+        testButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loginManager.logout();
+                Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+
         // Get relevant doorbells from database
         // TODO: Implement actual API call
         // Creates example JSON object with data to use while database is implemented
@@ -35,7 +62,6 @@ public class HomeActivity extends AppCompatActivity {
         JSONObject doorbellsObject;
         doorbellsObject = JsonUtils.safeParseStringToJsonObject(currentDoorbellsString);
         JSONArray currentDoorbells = doorbellsObject.optJSONArray("Doorbells");
-        System.out.println((currentDoorbells == null));
 
         // Add doorbell buttons
         HomePageButtonsFragment buttonsFragment = HomePageButtonsFragment.newInstance(currentDoorbells);
