@@ -1,0 +1,5 @@
+Explain how to run the project
+
+1. What commands are used to start the application
+2. Instructions to run included scripts or tools
+3. Examples of expected output or behaviour
