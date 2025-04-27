@@ -52,6 +52,11 @@ ARDUINO_PORT = "/dev/ttyACM0"  # adjust as needed
 BAUD_RATE    = 9600
 TIMEOUT_S    = 0.1
 
+cam = Picamera2()
+cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
+
+is_recording = False
+
 # Recording duration (30s for testing)
 RECORD_DURATION = 30
 
@@ -223,9 +228,9 @@ def live_recognition(duration=None):
 # ─── RECORD + RECOGNITION ──────────────────────────────────────────────────────
 
 def record_and_recognize(duration=RECORD_DURATION, output_path="recorded_video.mp4"):
+    is_recording=True
     encs, names = fetch_all_encodings()
-    cam = Picamera2()
-    cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
+    
     cam.start()
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out    = cv2.VideoWriter(output_path, fourcc, 30, (640,480))
@@ -257,6 +262,7 @@ def record_and_recognize(duration=RECORD_DURATION, output_path="recorded_video.m
     cam.stop(); cv2.destroyAllWindows()
     log(f"[INFO] Saved video to {output_path}")
     log("[INFO] Recording ended")
+    is_recording=False
 
 # ─── VIDEO PROCESS LATEST ─────────────────────────────────────────────────────
 
@@ -272,7 +278,6 @@ def process_latest_video(user_id):
 
 def serial_listener():
     ser = serial.Serial(ARDUINO_PORT, BAUD_RATE, timeout=TIMEOUT_S)
-    global record_thread
     log(f"[INFO] Listening on serial {ARDUINO_PORT}")
     while True:
         # phone commands
@@ -288,13 +293,9 @@ def serial_listener():
         if msg:
             log(f"Arduino → {msg}")
             if msg == "Object is a person.":
-                if record_thread is None or not record_thread.is_alive():
+                if not is_recording:
                     log("Triggering record_and_recognize")
-                    record_thread = threading.Thread(
-                        target=record_and_recognize,
-                        daemon=True
-                    )
-                    record_thread.start()
+                    record_and_recognize()
                 else:
                     log("Recording in progress; trigger ignored.")
         time.sleep(0.01)
@@ -302,8 +303,6 @@ def serial_listener():
 # ─── MAIN MENU ────────────────────────────────────────────────────────────────
 
 def main():
-    global record_thread
-    record_thread = None
 
     # start FTP server
     threading.Thread(target=start_ftp_server, daemon=True).start()
