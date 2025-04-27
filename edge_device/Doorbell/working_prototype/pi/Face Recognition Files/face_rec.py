@@ -41,6 +41,12 @@ DB_CONFIG    = {
     "database": "smart_door_db"
 }
 
+picam2 = Picamera2()
+config = picam2.create_video_configuration(
+    main={"format": 'XRGB8888', "size": (640, 480)}
+)
+picam2.configure(config)
+
 # helper fn: rotates image based on angle we give it
 def rotate_image(image, angle):
     if angle == 0:
@@ -234,11 +240,7 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
     print(f"[INFO] Recording {duration//60}-minute video with active recognition...")
     known_face_encodings, known_face_names = fetch_all_encodings()
 
-    picam2 = Picamera2()
-    config = picam2.create_video_configuration(
-        main={"format": 'XRGB8888', "size": (640, 480)}
-    )
-    picam2.configure(config)
+    
     picam2.start()
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -277,8 +279,6 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
 
             if name != "Unknown":
                 send_command(3); time.sleep(0.1)
-                send_command(1)
-                threading.Timer(5, lambda: send_command(2)).start()
 
         out.write(frame)
         cv2.imshow("Recording with Recognition", frame)
@@ -304,6 +304,7 @@ def process_latest_video(user_id):
 # Step 8: menu to use the app. simple loop
 def main():
     threading.Thread(target=start_ftp_server, daemon=True).start()
+    
     while True:
         print("\n[1] Process Latest Video")
         print("[2] Start Live Recognition")
