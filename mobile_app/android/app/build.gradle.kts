@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.gridlayout)
     implementation(libs.security.crypto)
     implementation(libs.androidx.biometric)
+    implementation(libs.commons.net)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

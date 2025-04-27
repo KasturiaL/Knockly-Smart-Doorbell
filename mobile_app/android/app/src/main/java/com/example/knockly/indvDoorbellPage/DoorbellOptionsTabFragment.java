@@ -67,7 +67,7 @@ public class DoorbellOptionsTabFragment extends Fragment {
         try {
             permissions = new JSONObject();
             permissions.put("manageUsers", true);
-            permissions.put("manageFaces", false);
+            permissions.put("manageFaces", true);
             permissions.put("manageDoorbell", true);
             permissions.put("viewFeedHistory", false);
             permissions.put("viewDoorbellLogs", true);
