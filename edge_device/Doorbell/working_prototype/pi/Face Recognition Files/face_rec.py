@@ -19,6 +19,10 @@ from pyftpdlib.servers     import FTPServer
 import threading, os, cv2, time, pickle, mysql.connector, face_recognition, numpy as np
 from picamera2             import Picamera2
 
+is_recording = False
+
+cam = Picamera2()
+cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
 # file used by the Arduino-Pi middleman to pick up commands
 COMMAND_FILE = "command.txt"
 def send_command(cmd):
@@ -180,10 +184,12 @@ def live_recognition(duration=None):
     print("[INFO] Live recognition ended")
 
 # Step 6: record + recognition
-def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
+def record_and_recognize(duration=30, output_path="recorded_video.mp4"):
+    global is_recording
+    is_recording= True
+    
     known_encs, known_names = fetch_all_encodings()
-    cam = Picamera2()
-    cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
+    
     cam.start()
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out    = cv2.VideoWriter(output_path, fourcc, 30, (640,480))
@@ -215,6 +221,7 @@ def record_and_recognize(duration=300, output_path="recorded_video.mp4"):
     cam.stop()
     cv2.destroyAllWindows()
     print(f"[INFO] Saved video to {output_path}")
+    is_recording = False
 
 # Step 7: process latest uploaded video
 def process_latest_video(user_id):

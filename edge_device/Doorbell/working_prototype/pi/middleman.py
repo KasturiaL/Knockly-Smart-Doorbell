@@ -51,6 +51,12 @@ def check_command():
         command_file.unlink()
         return cmd
     return None
+    
+def recording_wrapper():
+    global record_thread
+    face_rec.record_and_recognize(duration=30)
+    log("[INFO] Recording complete.")
+    record_thread=None
 
 def log(msg):
     """Timestamp + append to log.txt + print."""
@@ -91,14 +97,8 @@ while True:
         # 3) When Arduino says "Object is a person.", start recording+recognition
         if msg == "Object is a person.":
             # if no thread running or it has finished, start a new one
-            if record_thread is None or not record_thread.is_alive():
-                log("Triggering 30-second record_and_recognize")
-                record_thread = threading.Thread(
-                    target=face_rec.record_and_recognize,
-                    kwargs={"duration": 30},   # 30s for testing
-                    daemon=True
-                )
-                record_thread.start()
+            if not face_rec.is_recording:
+                face_rec.record_and_recognize()
             else:
                 log("Recording in progress; trigger ignored.")
 
