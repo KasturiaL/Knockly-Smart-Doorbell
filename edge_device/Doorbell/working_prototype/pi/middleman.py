@@ -16,8 +16,8 @@ import face_rec  # assumes face_rec.py is in the same directory
 # Configuration
 # ——————————————————————————————————————————————————————
 my_pc_port   = "COM9"       # adjust as needed
-lab_port = "COM4"
-pi_port = "/dev/ttyACM0"
+lab_port     = "COM4"
+pi_port      = "/dev/ttyACM0"
 baud_rate    = 9600
 timeout_s    = 0.1
 
@@ -65,10 +65,14 @@ def command_check(cmd):
     """Forward phone command to Arduino and log it."""
     arduino.write(cmd.encode())
     time.sleep(0.05)
-    if   cmd == "1": log("Phone has opened the door.")
-    elif cmd == "2": log("Phone has closed the door.")
-    elif cmd == "3": log("Known face detected.")
-    elif cmd == "4": log("Blocked face detected.")
+    if   cmd == "1":
+        log("Phone has opened the door.")
+    elif cmd == "2":
+        log("Phone has closed the door.")
+    elif cmd == "3":
+        log("Known face detected.")
+    elif cmd == "4":
+        log("Blocked face detected.")
 
 # ——————————————————————————————————————————————————————
 # Main Loop
@@ -88,10 +92,10 @@ while True:
         if msg == "Object is a person.":
             # if no thread running or it has finished, start a new one
             if record_thread is None or not record_thread.is_alive():
-                log("Triggering 5-minute record_and_recognize")
+                log("Triggering 30-second record_and_recognize")
                 record_thread = threading.Thread(
                     target=face_rec.record_and_recognize,
-                    kwargs={"duration": 300},
+                    kwargs={"duration": 30},   # 30s for testing
                     daemon=True
                 )
                 record_thread.start()
