@@ -14,6 +14,8 @@ def verify_password(p: str, h: str) -> bool:
 
 def create_token(data: dict) -> str:
     data = data.copy()
+    if "sub" in data:
+        data["sub"] = str(data["sub"])  # -> Force 'sub' to be a string.
     data["exp"] = datetime.utcnow() + timedelta(minutes=JWT_EXP_MINUTES)
     return jwt.encode(data, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
