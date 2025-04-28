@@ -1,4 +1,7 @@
 import os, secrets
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DB_CONFIG = dict(
     host=os.getenv("DB_HOST", "localhost"),
