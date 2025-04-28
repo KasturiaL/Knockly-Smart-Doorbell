@@ -40,11 +40,11 @@ public class HomeActivity extends AppCompatActivity {
         // Add test info to screen
         LoginManager loginManager = LoginManager.getInstance(this);
         TextView testText = findViewById(R.id.testTextHome);
-        String ID = loginManager.getCurrentUserID();
-        if (Objects.equals(ID, "")){
-            ID =  "Not logged in";
+        String testUsername = loginManager.getCurrentUsername();
+        if (Objects.equals(testUsername, "")){
+            testUsername =  "Not logged in";
         }
-        testText.setText(ID);
+        testText.setText(testUsername);
         Button testButton = findViewById(R.id.testButtonHome);
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override

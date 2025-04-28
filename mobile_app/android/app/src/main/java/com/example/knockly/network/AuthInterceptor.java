@@ -1,5 +1,7 @@
 package com.example.knockly.network;
 
+import android.util.Log;
+
 import java.io.IOException;
 
 import okhttp3.Interceptor;
@@ -18,6 +20,7 @@ public class AuthInterceptor implements Interceptor {
     @Override public Response intercept(Chain chain) throws IOException {
         Request req = chain.request();
         String jwt = tokenStore.getJwt();
+        Log.d("AuthInterceptor", "JWT: " + jwt); // Check if the JWT is non-null and valid
         if (jwt != null && !jwt.isEmpty()) {
             req = req.newBuilder()
                     .addHeader("Authorization", "Bearer " + jwt)

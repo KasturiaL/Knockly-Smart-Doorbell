@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.R;
 import com.example.knockly.homePage.HomeActivity;
+import com.example.knockly.network.dto.UserInfo;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
 import com.google.android.material.snackbar.Snackbar;
@@ -76,36 +77,62 @@ public class LoginActivity extends AppCompatActivity {
         Button biometricBtn = findViewById(R.id.biometricsButton);
         TextView biometricLabel = findViewById(R.id.biometricButtonLabel);
 
+
         btnLogin.setOnClickListener(v -> {
             String user = editUsername.getText().toString().trim();
             String pass = editPassword.getText().toString().trim();
 
             LoginManager lm = LoginManager.getInstance(this);
+            AuthRepository repo = AuthRepository.getInstance(lm);
 
-            AuthRepository repo = AuthRepository.create(lm); // TokenStore via lambda
             repo.login(user, pass).enqueue(new Callback<Token>() {
                 @Override public void onResponse(Call<Token> c, Response<Token> rsp) {
                     if (rsp.isSuccessful() && rsp.body()!=null) {
-                        lm.saveJwt(rsp.body().access_token);           // persist token
-                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
-                        finish();
+                        String jwtToken = rsp.body().access_token;
+                        lm.saveJwt(jwtToken);         // Save the JWT
+
+                        // force retrofit to rebuild with fresh token
+                        AuthRepository.resetInstance(lm);    // -> reset
+
+                        // Now safely fetch the current user
+                        AuthRepository freshRepo = AuthRepository.getInstance(lm);
+                        freshRepo.getCurrentUser().enqueue(new Callback<UserInfo>() {
+                            View view = findViewById(R.id.main);
+                            @Override
+                            public void onResponse(Call<UserInfo> call, Response<UserInfo> response) {
+                                if (response.isSuccessful() && response.body() != null){
+                                    UserInfo rBdy = response.body();
+                                    lm.saveLogin(rBdy.username, rBdy.email, rBdy.displayName);
+                                    startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                                    finish();
+                                } else {
+                                    Snackbar.make(view,"Login failed ("+response.code()+")",Snackbar.LENGTH_SHORT).show();
+                                }
+                            }
+                            @Override
+                            public void onFailure(Call<UserInfo> call, Throwable t) {
+                                Snackbar.make(view,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
+                            }
+                        });
+
                     } else {
                         Snackbar.make(v,"Login failed ("+rsp.code()+")",Snackbar.LENGTH_SHORT).show();
                     }
                 }
+
                 @Override public void onFailure(Call<Token> c, Throwable t) {
                     Snackbar.make(v,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
                 }
             });
         });
 
-        // TODO: remove test code
+                                    // TODO: remove test code
         TextView testText = findViewById(R.id.testTextLogin);
-        String ID = loginManager.getCurrentUserID();
-        if (Objects.equals(ID, "")) {
-            ID = "Not logged in";
+        String testUsername = loginManager.getCurrentUsername();
+        if (Objects.equals(testUsername, "")) {
+            testUsername = "Not logged in";
         }
-        testText.setText(ID);
+        testText.setText(testUsername);
 
         // Check if user can use biometric login
         // If not remove button
@@ -184,5 +211,31 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
 
         biometricPrompt.authenticate(promptInfo);
+    }
+
+    private void getAndStoreUserInfo(LoginManager lm, AuthRepository repo){
+        System.out.println("Getting user info");
+        repo.getCurrentUser().enqueue(new Callback<UserInfo>() {
+            View view = findViewById(R.id.main);
+            @Override
+            public void onResponse(Call<UserInfo> call, Response<UserInfo> response) {
+                System.out.println("Got response");
+                if (response.isSuccessful() && response.body() != null){
+                    System.out.println("Response successfull");
+                    UserInfo rBdy = response.body();
+                    lm.saveLogin(rBdy.username, rBdy.email, rBdy.displayName);
+                }
+                else{
+                    System.out.println("Response unsuccessfull");
+                    Snackbar.make(view,"Login failed ("+response.code()+")",Snackbar.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserInfo> call, Throwable t) {
+                System.out.println("API call failed");
+                Snackbar.make(view,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
+            }
+        });
     }
 }

@@ -64,8 +64,6 @@ public class HomePageButtonsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mDoorbells = JsonUtils.safeParseStringToJsonArray(getArguments().getString(ARG_DOORBELLS));
-            System.out.println(getArguments().getString(ARG_DOORBELLS));
-            System.out.println(mDoorbells);
         }
     }
 

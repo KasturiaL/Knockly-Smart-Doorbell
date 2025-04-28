@@ -26,10 +26,10 @@ public class LoginManager implements AuthInterceptor.TokenStore{
 
     // Names of pref keys
     private static final String PREFS_NAME = "securePrefs";
-    private static final String KEY_LOGGED_IN = "isLoggedIn";
-    private static final String KEY_CURRENT_USER = "userID";
+    private static final String KEY_LOGGED_IN = "isLoggedIn";;
     private static final String KEY_USER_EMAIL = "userEmail";
     private static final String KEY_USERNAME = "username";
+    public static final String KEY_DISPLAY_NAME = "displayName";
     private static final String KEY_LAST_LOGIN_TIME = "lastLogin";
 
     private static final String KEY_JWT = "jwtToken";
@@ -55,10 +55,10 @@ public class LoginManager implements AuthInterceptor.TokenStore{
             );
 
             // Check if previous login saved
-            String userID = prefs.getString(KEY_CURRENT_USER, null);
+            String currentUsername = prefs.getString(KEY_USERNAME, null);
             Long lastLogin = prefs.getLong(KEY_LAST_LOGIN_TIME, -1);
             // If data isn't valid then set to not logged in
-            if (userID == null || userID.isEmpty() || lastLogin == -1) {
+            if (currentUsername == null || currentUsername.isEmpty() || lastLogin == -1) {
                 prefs.edit().putBoolean(KEY_LOGGED_IN, false).apply();
             } else {
                 prefs.edit().putBoolean(KEY_LOGGED_IN, true).apply();
@@ -84,13 +84,13 @@ public class LoginManager implements AuthInterceptor.TokenStore{
     }
 
     // Once user is logged in it saves their details for future log ins
-    public void saveLogin(String userID, String userEmail, String username) {
+    public void saveLogin(String username, String userEmail, String displayName) {
         long currentTime = System.currentTimeMillis();
         prefs.edit()
                 .putBoolean(KEY_LOGGED_IN, true)
-                .putString(KEY_CURRENT_USER, userID)
                 .putString(KEY_USERNAME, username)
                 .putString(KEY_USER_EMAIL, userEmail)
+                .putString(KEY_DISPLAY_NAME, displayName)
                 .putLong(KEY_LAST_LOGIN_TIME, currentTime)
                 .apply();
         System.out.println("User Logged In");
@@ -100,9 +100,9 @@ public class LoginManager implements AuthInterceptor.TokenStore{
     public void logout() {
         prefs.edit()
                 .putBoolean(KEY_LOGGED_IN, false)
-                .remove(KEY_CURRENT_USER)
                 .remove(KEY_USER_EMAIL)
                 .remove(KEY_USERNAME)
+                .remove(KEY_DISPLAY_NAME)
                 .remove(KEY_LAST_LOGIN_TIME)
                 .remove(KEY_JWT)
                 .apply();
@@ -125,15 +125,6 @@ public class LoginManager implements AuthInterceptor.TokenStore{
         return true;
     }
 
-    // Returns UUID of current user
-    // Returns empty string if not logged in / error
-    public String getCurrentUserID() {
-        if (isLoggedIn()) {
-            return prefs.getString(KEY_CURRENT_USER, "");
-        }
-        return "";
-    }
-
     // Returns email of current user
     // Returns empty string if not logged in / error
     public String getCurrentUserEmail() {
@@ -148,6 +139,13 @@ public class LoginManager implements AuthInterceptor.TokenStore{
     public String getCurrentUsername() {
         if (isLoggedIn()) {
             return prefs.getString(KEY_USERNAME, "");
+        }
+        return "";
+    }
+
+    public String getCurrentDisplayName() {
+        if (isLoggedIn()) {
+            return prefs.getString(KEY_DISPLAY_NAME, "");
         }
         return "";
     }
