@@ -9,7 +9,9 @@ activity = "1.9.0"
 constraintlayout = "2.2.1"
 gridlayout = "1.0.0"
 securityCrypto = "1.0.0"
-commons-net = "3.10.0"
+commons-net = "3.8.0"
+retrofit = "2.9.0"
+okhttp    = "4.11.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -22,7 +24,10 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 gridlayout = { group = "androidx.gridlayout", name = "gridlayout", version.ref = "gridlayout" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version = "1.1.0" }
-commons-net = { module = "commons-net:commons-net", version.ref = "commons-net" }
+retrofit      = { module = "com.squareup.retrofit2:retrofit",          version.ref = "retrofit" }
+converter-gson= { module = "com.squareup.retrofit2:converter-gson",    version.ref = "retrofit" }
+okhttp-logging= { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+commons-net = { group = "commons-net", name = "commons-net", version.ref = "commons-net" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

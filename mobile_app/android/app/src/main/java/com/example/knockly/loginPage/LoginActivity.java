@@ -25,8 +25,16 @@ import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
 import com.google.android.material.snackbar.Snackbar;
 
+import com.example.knockly.network.AuthInterceptor;
+import com.example.knockly.network.repository.AuthRepository;
+import com.example.knockly.network.dto.Token;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 import java.util.Objects;
 import java.util.concurrent.Executor;
+
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -68,18 +76,27 @@ public class LoginActivity extends AppCompatActivity {
         Button biometricBtn = findViewById(R.id.biometricsButton);
         TextView biometricLabel = findViewById(R.id.biometricButtonLabel);
 
-        // TODO: Complete function
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String username = editUsername.getText().toString().trim();
-                String password = editPassword.getText().toString().trim();
+        btnLogin.setOnClickListener(v -> {
+            String user = editUsername.getText().toString().trim();
+            String pass = editPassword.getText().toString().trim();
 
-                loginManager.saveLogin("TestUserID_123", "example@gmail.com", "username123");
+            LoginManager lm = LoginManager.getInstance(this);
 
-                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                startActivity(intent);
-            }
+            AuthRepository repo = AuthRepository.create(lm); // TokenStore via lambda
+            repo.login(user, pass).enqueue(new Callback<Token>() {
+                @Override public void onResponse(Call<Token> c, Response<Token> rsp) {
+                    if (rsp.isSuccessful() && rsp.body()!=null) {
+                        lm.saveJwt(rsp.body().access_token);           // persist token
+                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                        finish();
+                    } else {
+                        Snackbar.make(v,"Login failed ("+rsp.code()+")",Snackbar.LENGTH_SHORT).show();
+                    }
+                }
+                @Override public void onFailure(Call<Token> c, Throwable t) {
+                    Snackbar.make(v,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
+                }
+            });
         });
 
         // TODO: remove test code

@@ -32,7 +32,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -40,7 +39,16 @@ dependencies {
     implementation(libs.gridlayout)
     implementation(libs.security.crypto)
     implementation(libs.androidx.biometric)
+
+    /* FTP library */
     implementation(libs.commons.net)
+
+    /* ───── Retrofit / OkHttp for API calls ───── */
+    implementation(libs.retrofit)           // core Retrofit
+    implementation(libs.converter.gson)     // JSON <--> POJO
+    implementation(libs.okhttp.logging)     // HTTP logcat interceptor
+
+    /* ───── tests ───── */
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
