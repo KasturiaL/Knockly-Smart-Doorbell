@@ -24,24 +24,34 @@ oauth2 = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # ------------ helpers -------------
 async def current_user(token: str = Depends(oauth2),
-                       db: AsyncSession = Depends(database.get_session)) -> models.User:
-    cred_exc = HTTPException(status_code=401, detail="Invalid credentials",
-                             headers={"WWW-Authenticate": "Bearer"})
+                       db: database.AsyncSession = Depends(database.get_session)) -> models.User:
+    if not token:
+        print("[DEBUG] No token provided.")
+        raise HTTPException(status_code=401, detail="No token provided", headers={"WWW-Authenticate": "Bearer"})
+
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        print("[DEBUG] Decoded token payload:", payload)
         uid = payload.get("sub")
         if uid is None:
-            raise cred_exc
-    except JWTError:
-        raise cred_exc
+            print("[DEBUG] Token missing 'sub'. Payload:", payload)
+            raise HTTPException(status_code=401, detail="Invalid token: no 'sub' field", headers={"WWW-Authenticate": "Bearer"})
+    except JWTError as e:
+        print("[DEBUG] JWT Error while decoding:", str(e))
+        raise HTTPException(status_code=401, detail="Invalid token: decode failed", headers={"WWW-Authenticate": "Bearer"})
 
-    # fixed
     stmt = select(models.User).options(selectinload(models.User.settings)).where(models.User.user_id == uid)
     res = await db.execute(stmt)
     user = res.scalars().first()
 
     if not user:
-        raise cred_exc
+        print(f"[DEBUG] No user found with user_id={uid}")
+        raise HTTPException(status_code=404, detail=f"User ID {uid} not found", headers={"WWW-Authenticate": "Bearer"})
+
+    if not user.settings:
+        print(f"[DEBUG] User {user.username} has no settings loaded!")
+        raise HTTPException(status_code=500, detail="User settings not found", headers={"WWW-Authenticate": "Bearer"})
+
     return user
 
 # -------- AUTH ------------------------------------------------
