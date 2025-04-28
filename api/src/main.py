@@ -4,11 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 import pyotp, qrcode, io, base64                     # for QR URL (optional)
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 import database, crud, schemas, security, models
 from config import JWT_SECRET, JWT_ALGORITHM
 
-app = FastAPI(title="SmartDoor API (full)")
+app = FastAPI(title="Knockly API v2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +34,12 @@ async def current_user(token: str = Depends(oauth2),
             raise cred_exc
     except JWTError:
         raise cred_exc
-    user = await db.get(models.User, uid)
+
+    # fixed
+    stmt = select(models.User).options(selectinload(models.User.settings)).where(models.User.user_id == uid)
+    res = await db.execute(stmt)
+    user = res.scalars().first()
+
     if not user:
         raise cred_exc
     return user
