@@ -27,7 +27,6 @@ bool personDetected = false;
 
 // Time variables initialization
 unsigned long objectStart = 0;
-unsigned long recordStart = 0;
 
 // Integer variables initialization
 int doorDistance;
@@ -136,7 +135,7 @@ void loop() {
     wasIdleLastLoop = false;
   }
 
-  person_detector(objectDistance, motionState, personDetected, objectDetected);
+  person_detector(objectDistance, motionState, objectDetected);
 
   // Idle state
 
@@ -259,49 +258,36 @@ void doorbell() {
 }
 
 // Function that detects if a person is near
-void person_detector(int distance, bool motion, bool &personDetected, bool &objectDetected) {
-  if (personDetected == false) { // No person detected
-    if (motion && distance <= 10) { // Check if there is object near
-      if (objectDetected == false) { // Only activate if flag is true for less spam
-        // Prints log to Serial
-        Serial.println("Object detected.");
-
-        // Changes flag
-        objectDetected = true;
-
-        // Records time for future comparison
-        objectStart = millis();
-      }
-    }
-
-    if (objectDetected == true && (millis() - objectStart >= 3000)) { // When 3 seconds have passed (> for better checking and objectDetected for less spam)
-      if (distance <= 10) { // Object still near ranger
-        // Prints log to Serial
-        Serial.println("Person.");
-
-        // Changes flag
-        personDetected = true;
-
-        // Records time for future comparison
-        recordStart = millis();
-
-      } else { // Object left range of ranger
-        // Prints log to Serial
-        Serial.println("Object left.");
-
-        // Reset flags
-        objectDetected = false;
-      }
-    }
-    
-  } else { // Person detected
-    if (millis() - recordStart >= 300000) { // When 5 mins have passed (> for better checking)
+void person_detector(int distance, bool motion, bool &objectDetected) {
+  if (motion && distance <= 10) { // Check if there is object near
+    if (objectDetected == false) { // Only activate if flag is true for less spam
       // Prints log to Serial
-      Serial.println("Recording complete.");
+      Serial.println("Object detected.");
+
+      // Changes flag
+      objectDetected = true;
+
+      // Records time for future comparison
+      objectStart = millis();
+    }
+  }
+
+  if (objectDetected == true && (millis() - objectStart >= 3000)) { // When 3 seconds have passed (> for better checking and objectDetected for less spam)
+    if (distance <= 10) { // Object still near ranger
+      // Prints log to Serial
+      Serial.println("Person.");
 
       // Reset flags
       objectDetected = false;
-      personDetected = false;
+    } else { // Object left range of ranger
+      // Prints log to Serial
+      Serial.println("Object left.");
+
+      // Reset flags
+      objectDetected = false;
     }
   }
+
+  // Gives system time so log messages will not be put in the wrong sequence
+  delay(500);
 }
