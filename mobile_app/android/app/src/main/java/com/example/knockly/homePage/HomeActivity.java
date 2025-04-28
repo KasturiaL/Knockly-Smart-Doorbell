@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,6 +15,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.loginPage.LoginActivity;
+import com.example.knockly.network.dto.DoorbellOut;
+import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.R;
 import com.example.knockly.utils.JsonUtils;
@@ -24,7 +27,14 @@ import org.json.JSONObject;
 
 import java.util.Objects;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class HomeActivity extends AppCompatActivity {
+    private DoorbellOut[] doorbells;
+    private final LoginManager lm = LoginManager.getInstance(this);
+    private final AuthRepository repo = AuthRepository.getInstance(lm);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,20 +68,31 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         // Get relevant doorbells from database
-        // TODO: Implement actual API call
-        // Creates example JSON object with data to use while database is implemented
-        String currentDoorbellsString = "{\"Doorbells\": [{\"ID\": \"550e8400-e29b-41d4-a716-446655440000\", \"Name\": \"Home Doorbell\"}, {\"ID\": \"9b4d4b9f-6a5d-4b6b-91b6-d53196e438b2\", \"Name\": \"Jane\'s Doorbell\"}, {\"ID\": \"a1234567-89ab-4cde-f012-3456789abcde\", \"Name\": \"John\'s Doorbell\"}] }";
-        JSONObject doorbellsObject;
-        doorbellsObject = JsonUtils.safeParseStringToJsonObject(currentDoorbellsString);
-        JSONArray currentDoorbells = doorbellsObject.optJSONArray("Doorbells");
+        Log.d("Home Activity", "Fetching doorbells");
+        repo.getUsersDoorbells().enqueue(new Callback<DoorbellOut[]>() {
+            @Override
+            public void onResponse(Call<DoorbellOut[]> call, Response<DoorbellOut[]> response) {
+                if (response.isSuccessful() && response.body()!=null){
+                    doorbells = response.body();
 
-        // Add doorbell buttons
-        HomePageButtonsFragment buttonsFragment = HomePageButtonsFragment.newInstance(currentDoorbells);
-        getSupportFragmentManager().beginTransaction().replace(R.id.HomeButtonsFragment, buttonsFragment).commit();
+                    // Add doorbell buttons to page
+                    HomePageButtonsFragment buttonsFragment = HomePageButtonsFragment.newInstance(doorbells);
+                    getSupportFragmentManager().beginTransaction().replace(R.id.HomeButtonsFragment, buttonsFragment).commit();
+                }
+                else{
+                    Toast.makeText(HomeActivity.this, "Error fetching doorbells " + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DoorbellOut[]> call, Throwable t) {
+                Toast.makeText(HomeActivity.this, "Error fetching doorbells " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Add header fragment
-        // TODO: Change the username to whatever the display name (if set)/username (if no display name) is in the headerTitle param
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome <username>", false, true);
+        String displayName = lm.getCurrentDisplayName();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Welcome " + displayName, false, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.HomeHeaderFragment, pageHeader).commit();
 
     }

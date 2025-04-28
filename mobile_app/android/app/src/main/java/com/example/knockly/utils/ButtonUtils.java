@@ -2,6 +2,7 @@ package com.example.knockly.utils;
 
 import android.content.Context;
 import android.util.TypedValue;
+import android.view.Gravity;
 
 import androidx.core.content.ContextCompat;
 import androidx.gridlayout.widget.GridLayout;
@@ -30,6 +31,10 @@ public class ButtonUtils {
         params.width = width;
         params.height = height;
         params.setMargins(margins, margins, margins, margins);
+
+        // Make sure each button takes up same amount of space
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.setGravity(Gravity.CENTER_VERTICAL);
 
         button.setLayoutParams(params);
 

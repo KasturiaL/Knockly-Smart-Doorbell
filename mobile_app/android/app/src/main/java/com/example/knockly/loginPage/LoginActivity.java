@@ -39,6 +39,8 @@ import java.util.concurrent.Executor;
 
 
 public class LoginActivity extends AppCompatActivity {
+    private final LoginManager lm = LoginManager.getInstance(this);
+    private final AuthRepository repo = AuthRepository.getInstance(lm);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +84,6 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(v -> {
             String user = editUsername.getText().toString().trim();
             String pass = editPassword.getText().toString().trim();
-
-            LoginManager lm = LoginManager.getInstance(this);
-            AuthRepository repo = AuthRepository.getInstance(lm);
 
             // Call API to login
             repo.login(user, pass).enqueue(new Callback<Token>() {

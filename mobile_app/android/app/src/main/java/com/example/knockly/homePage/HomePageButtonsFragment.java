@@ -17,6 +17,8 @@ import androidx.gridlayout.widget.GridLayout;
 import com.example.knockly.addDoorbellPage.AddDoorbellActivity;
 import com.example.knockly.indvDoorbellPage.IndvDoorbellActivity;
 import com.example.knockly.R;
+import com.example.knockly.network.dto.DoorbellOut;
+import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.utils.ButtonUtils;
 import com.example.knockly.utils.JsonUtils;
 import com.example.knockly.utils.ViewUtils;
@@ -37,7 +39,7 @@ public class HomePageButtonsFragment extends Fragment {
     // Parameter Initialisation
     private static final String ARG_DOORBELLS = "doorbells";
 
-    private JSONArray mDoorbells;
+    private DoorbellOut[] mDoorbells;
 
     public HomePageButtonsFragment() {
         // Required empty public constructor
@@ -51,10 +53,10 @@ public class HomePageButtonsFragment extends Fragment {
      *                  information about each individual doorbell
      * @return A new instance of fragment HomePageButtonsFragment.
      */
-    public static HomePageButtonsFragment newInstance(JSONArray doorbells) {
+    public static HomePageButtonsFragment newInstance(DoorbellOut[] doorbells) {
         HomePageButtonsFragment fragment = new HomePageButtonsFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_DOORBELLS, doorbells.toString());
+        args.putSerializable(ARG_DOORBELLS, doorbells);
         fragment.setArguments(args);
         return fragment;
     }
@@ -63,7 +65,7 @@ public class HomePageButtonsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mDoorbells = JsonUtils.safeParseStringToJsonArray(getArguments().getString(ARG_DOORBELLS));
+            mDoorbells = (DoorbellOut[]) getArguments().getSerializable(ARG_DOORBELLS);
         }
     }
 
@@ -75,23 +77,28 @@ public class HomePageButtonsFragment extends Fragment {
 
         // Get layout to add buttons to
         GridLayout layout = view.findViewById(R.id.HomePageScrollLayout);
+        layout.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
 
         // For each doorbell create button and add to display
-        JSONObject currentObject;
-        String doorbellName;
+        DoorbellOut currentObject;
+
+
+
         try {
             // Calculate button dimensions based on screen size
             int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
             int marginSize = (int) (ViewUtils.dpToPx(8, getContext()));
             int buttonWidth = (screenWidth / 2) - (4 * marginSize);
             int buttonHeight = (int) (ViewUtils.dpToPx(100, getContext()));
-            for (int m = 0; m < mDoorbells.length(); m++) {
-                currentObject = mDoorbells.optJSONObject(m);
+            for (int m = 0; m < mDoorbells.length; m++) {
+                currentObject = mDoorbells[m];
                 if (currentObject == null) {
                     continue;
                 }
-                doorbellName = currentObject.optString("Name", "Error: Name not found");
-                final String doorbellID = currentObject.optString("ID", "ID_NOT_FOUND");
+                String doorbellID = currentObject.doorbell_id;;
+                String doorbellName = currentObject.doorbell_name;
+                String ownerID = currentObject.owner_user_id;
+                LinkedUser[] linkedUsers = currentObject.linked_users;
 
                 // Create button for doorbell
                 MaterialButton doorbellButton = ButtonUtils.createDynamicStyledButton(getContext(), doorbellName, buttonWidth, buttonHeight, marginSize);
@@ -100,7 +107,10 @@ public class HomePageButtonsFragment extends Fragment {
                     @Override
                     public void onClick(View view) {
                         Intent intent = new Intent(getActivity(), IndvDoorbellActivity.class);
-                        intent.putExtra("Doorbell_ID", doorbellID);
+                        intent.putExtra("doorbell_ID", doorbellID);
+                        intent.putExtra("doorbell_name", doorbellName);
+                        intent.putExtra("owner_id", ownerID);
+                        intent.putExtra("linked_users", linkedUsers);
                         startActivity(intent);
                     }
                 });

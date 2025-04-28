@@ -23,6 +23,7 @@ import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
 import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.R;
+import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
 import com.google.android.material.snackbar.Snackbar;
@@ -43,13 +44,16 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
             return insets;
         });
 
-        // Get data of current doorbell from intent that started the activity
+        // Get data about current doorbell from intent that started the activity
         Intent intent = getIntent();
-        String doorbellID = intent.getStringExtra("Doorbell_ID");
+        String doorbellID = intent.getStringExtra("doorbell_ID");
+        String doorbellName = intent.getStringExtra("doorbell_name");
+        String ownerID = intent.getStringExtra("owner_id");
+        LinkedUser[] linkedUsers = (LinkedUser[]) intent.getSerializableExtra("linked_users");
 
         // Add header fragment
         // TODO: Change headerTitle to the doorbell's name, same with the other button intents' values
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Doorbell #...", true, true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance(doorbellName, true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellHeaderFragment, pageHeader).commit();
 
         // Add options tab at bottom

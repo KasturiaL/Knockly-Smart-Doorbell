@@ -1,5 +1,6 @@
 package com.example.knockly.network.service;
 
+import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.dto.LoginRequest;
 import com.example.knockly.network.dto.Token;
 import com.example.knockly.network.dto.UserInfo;
@@ -18,4 +19,7 @@ public interface AuthService {
 
     @GET("users/me")
     Call<UserInfo> getCurrentUser();
+
+    @GET("doorbells")
+    Call<DoorbellOut[]> getUsersDoorbells();
 }

@@ -10,8 +10,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.R;
 import com.example.knockly.shared.PageHeaderFragment;
+import com.example.knockly.utils.LoginManager;
 
 public class AppSettingsActivity extends AppCompatActivity {
+    private LoginManager lm = LoginManager.getInstance(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +27,8 @@ public class AppSettingsActivity extends AppCompatActivity {
         });
 
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<username> Settings", true, false);
+        String displayName = lm.getCurrentDisplayName();
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance(displayName + "'s Settings", true, false);
         getSupportFragmentManager().beginTransaction().replace(R.id.AppSettingsHeaderFragment, pageHeader).commit();
     }
 }
