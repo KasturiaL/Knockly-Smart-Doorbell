@@ -2,7 +2,7 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload                       # NEW
 from typing import Optional, List, Set
-import models, security
+import models, security, schemas
 
 # ---------- user helpers ----------
 async def _user_query():
@@ -46,14 +46,50 @@ async def authenticate(db: AsyncSession, identifier: str, password: str):
     return None
 
 # ---------- doorbell helpers ----------
-async def list_user_doorbells(db: AsyncSession, user_id: int) -> List[models.Doorbell]:
+async def list_user_doorbells(db: AsyncSession, user_id: int):
     q = (
         select(models.Doorbell)
-        .join(models.User.doorbells)
-        .where(models.User.user_id == user_id)
+        .options(selectinload(models.Doorbell.users))  # preloading users
+        .join(models.user_doorbell, models.user_doorbell.c.doorbell_id == models.Doorbell.doorbell_id)
+        .where(models.user_doorbell.c.user_id == user_id)
     )
     res = await db.execute(q)
-    return res.scalars().all()
+    doorbells = res.scalars().all()
+
+    # Now enrich linked_users manually
+    enriched_doorbells = []
+    for doorbell in doorbells:
+        linked_users = []
+        for user in doorbell.users:
+            # Fetch role_id manually from user_doorbell join table
+            result = await db.execute(
+                select(models.user_doorbell.c.role_id)
+                .where(
+                    (models.user_doorbell.c.user_id == user.user_id) &
+                    (models.user_doorbell.c.doorbell_id == doorbell.doorbell_id)
+                )
+            )
+            role_id = result.scalar()
+
+            # Optionally get role_name too
+            role_name = None
+            if role_id:
+                role_res = await db.execute(
+                    select(models.Role.role_name).where(models.Role.role_id == role_id)
+                )
+                role_name = role_res.scalar()
+
+            linked_users.append(schemas.LinkedUserOut(
+                user_id=user.user_id,
+                username=user.username,
+                role_id=role_id,
+                role_name=role_name
+            ))
+
+        doorbell.linked_users = linked_users
+        enriched_doorbells.append(doorbell)
+
+    return enriched_doorbells
 
 # ---------- permission maths ----------
 async def _role_permission_ids(db: AsyncSession, role_id: int) -> Set[int]:

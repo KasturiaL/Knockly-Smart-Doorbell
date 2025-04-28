@@ -38,12 +38,35 @@ class UserSettingsOut(BaseModel):
         orm_mode = True
 
 # ───────── doorbells & permissions ─────────
-class DoorbellOut(BaseModel):
-    doorbell_id: int
-    doorbell_name: str
+
+class LinkedUserOut(BaseModel):
+    user_id: int
+    username: str
+    role_id: Optional[int] = None
+    role_name: Optional[str] = None
 
     class Config:
         orm_mode = True
+        
+class DoorbellOut(BaseModel):
+    doorbell_id: int
+    doorbell_name: str
+    owner_user_id: Optional[int] = None
+    linked_users: List[LinkedUserOut] = []  # <--- Added this line!
+
+    class Config:
+        orm_mode = True
+
+class DoorbellCreate(BaseModel):
+    doorbell_name: str
+    doorbell_password: str
+    enable_facial_recognition: bool = False
+    auto_delete_recordings: bool = False
+
+class UserDoorbellLinkCreate(BaseModel):
+    user_id: int
+    doorbell_id: int
+    role_id: Optional[int] = None
 
 class PermCheckResponse(BaseModel):
     permission: str
@@ -54,7 +77,7 @@ class OverrideSet(BaseModel):
     is_granted: bool
 
 # ───────── face profiles (new) ─────────
-class FaceProfileOut(BaseModel):              # ←-- NEW
+class FaceProfileOut(BaseModel):
     face_id: int
     doorbell_id: int
     face_profile_name: Optional[str]

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import pyotp, qrcode, io, base64                     # for QR URL (optional)
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import insert
 
 import database, crud, schemas, security, models
 from config import JWT_SECRET, JWT_ALGORITHM
@@ -128,6 +129,61 @@ async def read_settings(me: models.User = Depends(current_user)):
 async def my_bells(me: models.User = Depends(current_user),
                    db: AsyncSession = Depends(database.get_session)):
     return await crud.list_user_doorbells(db, me.user_id)
+
+@app.post("/doorbells", response_model=schemas.DoorbellOut, status_code=201)
+async def create_bell(body: schemas.DoorbellCreate,
+                      me: models.User = Depends(current_user),
+                      db: AsyncSession = Depends(database.get_session)):
+    bell = models.Doorbell(
+        doorbell_name=body.doorbell_name,
+        doorbell_password=body.doorbell_password,
+        owner_user_id=me.user_id,
+        enable_facial_recognition=body.enable_facial_recognition,
+        auto_delete_recordings=body.auto_delete_recordings,
+    )
+    db.add(bell)
+    await db.flush()  # get bell.doorbell_id populated
+
+    # link creator to doorbell
+    await db.execute(
+        insert(models.user_doorbell).values(
+            user_id=me.user_id,
+            doorbell_id=bell.doorbell_id,
+            role_id=None   # or assign a default role here if needed
+        )
+    )
+    await db.commit()
+    await db.refresh(bell)
+    return bell
+
+@app.post("/doorbells/link-user", status_code=201)
+async def link_user(body: schemas.UserDoorbellLinkCreate,
+                    me: models.User = Depends(current_user),
+                    db: AsyncSession = Depends(database.get_session)):
+    # optional: validate that role_id exists
+    if body.role_id:
+        role_q = await db.execute(select(models.Role).where(models.Role.role_id == body.role_id))
+        if not role_q.scalar():
+            raise HTTPException(400, "Invalid role_id")
+
+    # optional: prevent duplicate linking
+    existing = await db.execute(
+        select(models.user_doorbell)
+        .where((models.user_doorbell.c.user_id == body.user_id) &
+               (models.user_doorbell.c.doorbell_id == body.doorbell_id))
+    )
+    if existing.first():
+        raise HTTPException(400, "User already linked to doorbell")
+
+    await db.execute(
+        insert(models.user_doorbell).values(
+            user_id=body.user_id,
+            doorbell_id=body.doorbell_id,
+            role_id=body.role_id
+        )
+    )
+    await db.commit()
+    return {"detail": "User linked to doorbell"}
 
 # ---------- PERMISSIONS (read + override) ------------------- 
 @app.get("/doorbells/{doorbell_id}/permissions",
