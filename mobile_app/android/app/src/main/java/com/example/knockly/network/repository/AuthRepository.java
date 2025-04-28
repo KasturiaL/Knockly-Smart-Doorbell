@@ -25,9 +25,7 @@ public class AuthRepository {
 
     public static AuthRepository getInstance(AuthInterceptor.TokenStore tokenStore) {
         if (instance == null){
-            return new AuthRepository(
-                    ApiClient.get(tokenStore).create(AuthService.class)
-            );
+            instance =  new AuthRepository(ApiClient.get(tokenStore).create(AuthService.class));
         }
         return instance;
     }

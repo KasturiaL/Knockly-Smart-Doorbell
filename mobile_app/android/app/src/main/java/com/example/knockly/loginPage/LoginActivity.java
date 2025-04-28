@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -85,48 +86,62 @@ public class LoginActivity extends AppCompatActivity {
             LoginManager lm = LoginManager.getInstance(this);
             AuthRepository repo = AuthRepository.getInstance(lm);
 
+            // Call API to login
             repo.login(user, pass).enqueue(new Callback<Token>() {
+                // On login API response
                 @Override public void onResponse(Call<Token> c, Response<Token> rsp) {
+                    // If login API call successful
                     if (rsp.isSuccessful() && rsp.body()!=null) {
-                        String jwtToken = rsp.body().access_token;
-                        lm.saveJwt(jwtToken);         // Save the JWT
+                        // Save jwt token for future API calls
+                        lm.saveJwt(rsp.body().access_token);
 
-                        // force retrofit to rebuild with fresh token
-                        AuthRepository.resetInstance(lm);    // -> reset
-
-                        // Now safely fetch the current user
-                        AuthRepository freshRepo = AuthRepository.getInstance(lm);
-                        freshRepo.getCurrentUser().enqueue(new Callback<UserInfo>() {
+                        // Call API to get info about user logged in
+                        repo.getCurrentUser().enqueue(new Callback<UserInfo>() {
                             View view = findViewById(R.id.main);
                             @Override
+                            // On userInfo API response
                             public void onResponse(Call<UserInfo> call, Response<UserInfo> response) {
+                                // If userInfo API call successful
                                 if (response.isSuccessful() && response.body() != null){
+                                    // Process response body
                                     UserInfo rBdy = response.body();
-                                    lm.saveLogin(rBdy.username, rBdy.email, rBdy.displayName);
+
+                                    // Save info to login manager
+                                    lm.saveLogin(rBdy.user_id, rBdy.email, rBdy.username, rBdy.display_name);
+                                    Log.d("Login Activity", lm.getCurrentUsername());
+
+                                    // Move to home page
                                     startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                                     finish();
-                                } else {
-                                    Snackbar.make(view,"Login failed ("+response.code()+")",Snackbar.LENGTH_SHORT).show();
+                                }
+
+                                // If userInfo API response unsuccessful
+                                else{
+                                    Toast.makeText(LoginActivity.this, "Login failed ("+response.code()+")", Toast.LENGTH_SHORT).show();
                                 }
                             }
+
+                            // On userInfo API failure
                             @Override
                             public void onFailure(Call<UserInfo> call, Throwable t) {
-                                Snackbar.make(view,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
+                                Toast.makeText(LoginActivity.this, "Network error: "+t.getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         });
 
+                    // If login API response unsuccessful
                     } else {
-                        Snackbar.make(v,"Login failed ("+rsp.code()+")",Snackbar.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this,"Login failed ("+rsp.code()+")", Toast.LENGTH_SHORT).show();
                     }
                 }
 
+                // On login API failure
                 @Override public void onFailure(Call<Token> c, Throwable t) {
-                    Snackbar.make(v,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Network error: "+t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         });
 
-                                    // TODO: remove test code
+        // TODO: remove test code
         TextView testText = findViewById(R.id.testTextLogin);
         String testUsername = loginManager.getCurrentUsername();
         if (Objects.equals(testUsername, "")) {
@@ -194,6 +209,7 @@ public class LoginActivity extends AppCompatActivity {
                 super.onAuthenticationSucceeded(result);
                 Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                 startActivity(intent);
+                finish();
             }
 
             @Override
@@ -213,29 +229,4 @@ public class LoginActivity extends AppCompatActivity {
         biometricPrompt.authenticate(promptInfo);
     }
 
-    private void getAndStoreUserInfo(LoginManager lm, AuthRepository repo){
-        System.out.println("Getting user info");
-        repo.getCurrentUser().enqueue(new Callback<UserInfo>() {
-            View view = findViewById(R.id.main);
-            @Override
-            public void onResponse(Call<UserInfo> call, Response<UserInfo> response) {
-                System.out.println("Got response");
-                if (response.isSuccessful() && response.body() != null){
-                    System.out.println("Response successfull");
-                    UserInfo rBdy = response.body();
-                    lm.saveLogin(rBdy.username, rBdy.email, rBdy.displayName);
-                }
-                else{
-                    System.out.println("Response unsuccessfull");
-                    Snackbar.make(view,"Login failed ("+response.code()+")",Snackbar.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<UserInfo> call, Throwable t) {
-                System.out.println("API call failed");
-                Snackbar.make(view,"Network error: "+t.getMessage(),Snackbar.LENGTH_SHORT).show();
-            }
-        });
-    }
 }

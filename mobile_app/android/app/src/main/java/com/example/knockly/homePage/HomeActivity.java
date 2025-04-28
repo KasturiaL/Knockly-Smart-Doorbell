@@ -2,6 +2,7 @@ package com.example.knockly.homePage;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -41,6 +42,7 @@ public class HomeActivity extends AppCompatActivity {
         LoginManager loginManager = LoginManager.getInstance(this);
         TextView testText = findViewById(R.id.testTextHome);
         String testUsername = loginManager.getCurrentUsername();
+        Log.d("Home Activity", loginManager.getCurrentUsername());
         if (Objects.equals(testUsername, "")){
             testUsername =  "Not logged in";
         }
