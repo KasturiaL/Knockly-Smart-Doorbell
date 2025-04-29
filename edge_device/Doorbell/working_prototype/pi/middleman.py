@@ -94,13 +94,15 @@ def log(msg):
 # Function to send a command to the arduino
 def command(cmd):
     # Sends the command to the arduino
-    arduino.write(cmd.encode())
+    arduino.write(bytes(cmd, 'utf-8'))
 
     # Gives the system time to run the command
     time.sleep(0.05)
 
     # Checks which command is sent
-    if   cmd == "1": # Manual open door
+    if     cmd == "0": # System startup
+        log("Middleman startup complete.")
+    elif   cmd == "1": # Manual open door
         log("Phone has requested to open the door.")
     elif cmd == "2": # Manual close door
         log("Phone has requested to close the door.")
@@ -109,11 +111,20 @@ def command(cmd):
     elif cmd == "4": # Detected blocked face
         log("Blocked face detected.")
 
+def setup() {
+    # Sends reset command to Arduino
+    command("0")
+
+    # Prints starting message for clarity when debugging
+    print("Listening for log messages...")
+}
+
 # ——————————————————————————————————————————————————————
 # Main Code
 # ——————————————————————————————————————————————————————
-# Prints starting message for clarity when debugging
-print("Listening for log messages...")
+
+# Starts up Arduino script for syncronized logs
+setup()
 
 # Starts loop
 while True:
@@ -129,7 +140,7 @@ while True:
 
     if msg: # There is a message
         # Logs the message
-        log("msg")
+        log(msg)
 
         # Checks if the log message is linked to an action
         if msg == "Object is a person.": # Arduino detects a person
