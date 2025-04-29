@@ -47,6 +47,8 @@ DB_CONFIG = {
     "database": "smart_door_db"
 }
 
+COMMAND_FILE = "command.txt"
+
 # ——————————————————————————————————————————————————————
 # Setup Arduino serial
 # ——————————————————————————————————————————————————————
@@ -146,12 +148,25 @@ def fetch_all_encodings():
 def timer(duration=30, output_path="recorded_video.mp4"):
 	global isRecord
 	isRecord=True
+	
+	known_encs, known_names = fetch_all_encodings()
+	
+	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+	out = cv2.VideoWriter("recorded_video.mp4", fourcc, 30,(640,480))
     
 	cam.start()
 	print(f"[INFO] Recording {duration//60}-minute video with recognition...")
 	start = time.time()
 	while time.time()-start < duration:
-		record_and_recognize()
+		frame = cam.capture_array()
+		frame = record_and_recognize(frame, known_encs, known_names)
+		out.write(frame)
+		cv2.imshow("Recording + Recognition", frame)
+		
+		if cv2.waitKey(1) & 0xFF == ord("q"):
+			break
+			
+	out.release()
 	cam.stop()
 	cv2.destroyAllWindows()
 	print(f"[INFO] Saved video to {output_path}")
@@ -159,32 +174,36 @@ def timer(duration=30, output_path="recorded_video.mp4"):
 	isRecord=False
 	
     
-def record_and_recognize():
-	known_encs, known_names = fetch_all_encodings()
-	
-	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-	out = cv2.VideoWriter("recorded_video.mp4", fourcc, 30,(640,480))
-    
-	frame = cam.capture_array()
+def record_and_recognize(frame, known_encs, known_names):
 	small = cv2.resize(frame,(0,0),fx=0.25,fy=0.25)
 	rgb   = cv2.cvtColor(small,cv2.COLOR_BGR2RGB)
 	locs  = face_recognition.face_locations(rgb)
 	encs  = face_recognition.face_encodings(rgb, locs)
+	
 	for (t,r,b,l),e in zip(locs,encs):
-		m = face_recognition.compare_faces(known_encs, e)
 		name="Unknown"
 		if known_encs:
 			d = face_recognition.face_distance(known_encs, e)
+			m = face_recognition.compare_faces(known_encs, e)
 			idx = np.argmin(d)
-			if m[idx]: name=known_names[idx]
+			if m[idx]: 
+				name=known_names[idx]
+			
 		t,r,b,l=[x*4 for x in (t,r,b,l)]
 		col=(0,255,0) if name!="Unknown" else (0,0,255)
 		cv2.rectangle(frame,(l,t),(r,b),col,2)
 		cv2.putText(frame,name,(l+6,t-6),cv2.FONT_HERSHEY_SIMPLEX,0.6,col,2)
+		
 		if name!="Unknown":
-			send_command(3); time.sleep(0.1)
-	out.write(frame)
-	cv2.imshow("Recording + Recognition", frame)
+			send_command(3)
+			time.sleep(0.1)
+	
+	return frame
+	
+def send_command(cmd):
+    """Write a single-digit command into command.txt for the Arduino."""
+    with open(COMMAND_FILE, "w") as f:
+        f.write(str(cmd))
 
 # ——————————————————————————————————————————————————————
 # Main Code
