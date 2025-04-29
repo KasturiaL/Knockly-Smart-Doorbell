@@ -25,7 +25,6 @@ import com.example.knockly.homePage.HomeActivity;
 import com.example.knockly.network.dto.UserInfo;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
-import com.google.android.material.snackbar.Snackbar;
 
 import com.example.knockly.network.AuthInterceptor;
 import com.example.knockly.network.repository.AuthRepository;
@@ -215,7 +214,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onAuthenticationFailed() {
                 super.onAuthenticationFailed();
                 View view = findViewById(android.R.id.content);
-                Snackbar.make(view, "Biometric login failed. Please try again", Snackbar.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Biometric login failed. Please try again", Toast.LENGTH_SHORT).show();
             }
         });
 

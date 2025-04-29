@@ -27,7 +27,6 @@ import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
 import com.example.knockly.utils.LoginManager;
 import com.example.knockly.utils.SSHUtils;
-import com.google.android.material.snackbar.Snackbar;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
@@ -226,11 +225,11 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         // If door opened successfully then change door status button to open
         if (returnStatus == 200){
             liveFeedFragment.setToggleButtonOn();
-            Snackbar.make(view, "Door opened successfully!", Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(context, "Door opened successfully!", Toast.LENGTH_SHORT).show();
         }
         // If error occurred
         else{
-            Snackbar.make(view, "Error opening door, please try again", Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(context, "Error opening door, please try again", Toast.LENGTH_SHORT).show();
         }
 
         returnStatus = -1;
@@ -253,11 +252,11 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         // If door opened successfully then change door status button to open
         if (returnStatus == 200){
             liveFeedFragment.setToggleButtonOff();
-            Snackbar.make(view, "Door closed successfully!", Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(context, "Door closed successfully!", Toast.LENGTH_SHORT).show();
         }
         // If error occurred
         else{
-            Snackbar.make(view, "Error closing door, please try again", Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(context, "Error closing door, please try again", Toast.LENGTH_SHORT).show();
         }
 
         returnStatus = -1;

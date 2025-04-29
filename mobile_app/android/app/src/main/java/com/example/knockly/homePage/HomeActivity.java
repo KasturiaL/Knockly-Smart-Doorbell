@@ -57,15 +57,7 @@ public class HomeActivity extends AppCompatActivity {
             testUsername =  "Not logged in";
         }
         testText.setText(testUsername);
-        Button testButton = findViewById(R.id.testButtonHome);
-        testButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                loginManager.logout();
-                Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-                startActivity(intent);
-            }
-        });
+
 
         // Get relevant doorbells from database
         Log.d("Home Activity", "Fetching doorbells");

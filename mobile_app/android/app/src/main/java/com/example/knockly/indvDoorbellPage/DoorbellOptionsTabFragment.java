@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.example.knockly.R;
 import com.example.knockly.doorbellLogsPage.DoorbellLogsActivity;
@@ -20,7 +21,6 @@ import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONObject;
 
@@ -129,8 +129,7 @@ public class DoorbellOptionsTabFragment extends Fragment {
                 currentButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Snackbar.make(view, "You don't have permission to access this page. Please contact the admin if you need to change this.", Snackbar.LENGTH_SHORT).show();
-
+                        Toast.makeText(getContext(), "You don’t have access to this page. Please contact the admin if needed.", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
