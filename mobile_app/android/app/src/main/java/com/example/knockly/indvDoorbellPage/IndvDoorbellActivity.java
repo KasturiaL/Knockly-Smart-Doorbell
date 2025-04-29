@@ -80,11 +80,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
                     piHost = SSHUtils.getPiIP(context, username, password);
                     System.out.println(piHost);
 
-                    try {
-                        sshSession = SSHUtils.startSSH(username, piHost, password);
-                    } catch (JSchException e) {
-                        System.out.println(e.getMessage());
-                    }
+                    startSession();
                 }
             });
             networkThread.start();
@@ -92,13 +88,19 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        sshSession = SSHUtils.startSSH(username, piHost, password);
-                    } catch (JSchException e) {
-                        System.out.println(e.getMessage());
-                    }
+                    startSession();
                 }
             }).start();
+        }
+    }
+
+    private void startSession() {
+        if (!piHost.isBlank()) {
+            try {
+                sshSession = SSHUtils.startSSH(username, piHost, password);
+            } catch (JSchException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 

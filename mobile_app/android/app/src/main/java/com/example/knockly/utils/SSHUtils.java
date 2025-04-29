@@ -114,7 +114,7 @@ public class SSHUtils {
                 e.printStackTrace();
             }
         }
-        return "Pi not found";
+        return "";
     }
 
     public static Session startSSH(String username, String host, String password) throws JSchException {
