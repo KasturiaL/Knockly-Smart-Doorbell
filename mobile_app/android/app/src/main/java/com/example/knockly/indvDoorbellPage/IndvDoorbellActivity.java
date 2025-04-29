@@ -1,5 +1,6 @@
 package com.example.knockly.indvDoorbellPage;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,13 +18,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
-import androidx.fragment.app.FragmentContainer;
 
-import com.example.knockly.doorbellLogsPage.DoorbellLogsActivity;
-import com.example.knockly.feedHistoryPage.FeedHistoryActivity;
-import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
-import com.example.knockly.manageFacesPage.ManageFacesActivity;
-import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.R;
 import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.network.dto.PermissionResponse;
@@ -31,7 +26,10 @@ import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
 import com.example.knockly.utils.LoginManager;
+import com.example.knockly.utils.SSHUtils;
 import com.google.android.material.snackbar.Snackbar;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -43,6 +41,14 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
 
     private Insets systemBars;
     private  LiveFeedFragment liveFeedFragment;
+    private Context context;
+    private final String username = "pi";
+    private final String password = "raspberry";
+    private String piHost = "";
+    private Session sshSession;
+    private String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    private String openCmd = "\nchmod +x open.sh\n./open.sh\n";
+    private String closeCmd = "\nchmod +x close.sh\n./close.sh\n";
 
     private PermissionResponse[] userPerms;
 
@@ -101,6 +107,39 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         // Add door control fragment
         DoorControlFragment doorControlFragment = DoorControlFragment.newInstance(doorbellID);
         getSupportFragmentManager().beginTransaction().replace(R.id.DoorControlContainer, doorControlFragment).commit();
+
+        context = getApplicationContext();
+
+        if (piHost.isBlank()) {
+
+            final Thread networkThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    piHost = SSHUtils.getPiIP(context, username, password);
+                    System.out.println(piHost);
+
+                    startSession();
+                }
+            });
+            networkThread.start();
+        } else {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    startSession();
+                }
+            }).start();
+        }
+    }
+
+    private void startSession() {
+        if (!piHost.isBlank()) {
+            try {
+                sshSession = SSHUtils.startSSH(username, piHost, password);
+            } catch (JSchException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -169,12 +208,19 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         controller.show(WindowInsetsCompat.Type.statusBars());
     }
 
-    @Override
-    public void openDoor(){
-        // TODO: Add API call to actually open the door
+    private int returnStatus = -1;
 
-        // Variable declaration to assume that api has returned success status
-        int returnStatus = 200;
+    @Override
+    public void openDoor() {
+        if (sshSession != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String command = "\ncd "+commandDir+"\n"+openCmd+"\n";
+                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
+                }
+            }).start();
+        }
 
         View view = findViewById(R.id.main);
         // If door opened successfully then change door status button to open
@@ -186,14 +232,22 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         else{
             Snackbar.make(view, "Error opening door, please try again", Snackbar.LENGTH_SHORT).show();
         }
+
+        returnStatus = -1;
     }
 
     @Override
-    public void closeDoor(){
-        // TODO: Add API call to actually close the door
+    public void closeDoor() {
+        if (sshSession != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String command = "\ncd "+commandDir+"\n"+closeCmd+"\n";
+                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
+                }
+            }).start();
+        }
 
-        // Variable declaration to assume that api has returned success status
-        int returnStatus = 200;
 
         View view = findViewById(R.id.main);
         // If door opened successfully then change door status button to open
@@ -205,5 +259,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         else{
             Snackbar.make(view, "Error closing door, please try again", Snackbar.LENGTH_SHORT).show();
         }
+
+        returnStatus = -1;
     }
 }

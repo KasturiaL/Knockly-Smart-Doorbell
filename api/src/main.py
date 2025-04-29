@@ -149,7 +149,7 @@ async def create_bell(body: schemas.DoorbellCreate,
         insert(models.user_doorbell).values(
             user_id=me.user_id,
             doorbell_id=bell.doorbell_id,
-            role_id=None   # or assign a default role here if needed
+            role_id=1   # or assign a default role here if needed
         )
     )
     await db.commit()
