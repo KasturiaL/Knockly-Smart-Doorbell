@@ -143,26 +143,27 @@ def fetch_all_encodings():
     cur.close(); conn.close()
     return encs, names
     
-def timer(duration=30):
+def timer(duration=30, output_path="recorded_video.mp4"):
+	global isRecord
 	isRecord=True
-	
-	cam.start()
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out    = cv2.VideoWriter("recorded_video.mp4", fourcc, 30, (640,480))
-    print(f"[INFO] Recording {duration//60}-minute video with recognition…")
-    start = time.time()
-    while time.time()-start<duration:
-		record_and_recognize()
-	out.release()
-    cam.stop()
-    cv2.destroyAllWindows()
-    print(f"[INFO] Saved video to {output_path}")
     
-    isRecord=False
+	cam.start()
+	print(f"[INFO] Recording {duration//60}-minute video with recognition...")
+	start = time.time()
+	while time.time()-start < duration:
+		record_and_recognize()
+	cam.stop()
+	cv2.destroyAllWindows()
+	print(f"[INFO] Saved video to {output_path}")
+	
+	isRecord=False
 	
     
 def record_and_recognize():
-    known_encs, known_names = fetch_all_encodings()
+	known_encs, known_names = fetch_all_encodings()
+	
+	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+	out = cv2.VideoWriter("recorded_video.mp4", fourcc, 30,(640,480))
     
 	frame = cam.capture_array()
 	small = cv2.resize(frame,(0,0),fx=0.25,fy=0.25)
@@ -184,7 +185,6 @@ def record_and_recognize():
 			send_command(3); time.sleep(0.1)
 	out.write(frame)
 	cv2.imshow("Recording + Recognition", frame)
-	if cv2.waitKey(1)&0xFF==ord('q'): break
 
 # ——————————————————————————————————————————————————————
 # Main Code
