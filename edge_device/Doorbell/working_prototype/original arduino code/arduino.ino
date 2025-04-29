@@ -1,7 +1,7 @@
 // Library imports
 #include <Servo.h>
 #include <Ultrasonic.h>
-#include <Wire.h>
+#include <avr/wdt.h>
 
 // Pin variables initialization (Add one to port number)
 const int manualButtonPin = 1;
@@ -69,8 +69,12 @@ void setup() {
 	// Setting max serial data wait time 
 	Serial.setTimeout(1);
 
+  while (!Serial) {
+    ;
+  }
+
   // Sends end of Arduino setup to python to log
-  Serial.println("Arduino startup complete.")
+  Serial.println("Arduino startup complete.");
 }
 
 void loop() {
@@ -286,7 +290,7 @@ void person_detector(int distance, bool motion, bool &objectDetected) {
   if (objectDetected == true && (millis() - objectStart >= 3000)) { // When 3 seconds have passed (> for better checking and objectDetected for less spam)
     if (distance <= 10) { // Object still near ranger
       // Prints log to Serial
-      Serial.println("Person.");
+      Serial.println("Object is a person.");
 
       // Reset flags
       objectDetected = false;
@@ -310,4 +314,3 @@ void reset() {
   // Prevents unwanted code executions
   while (1);
 }
-
