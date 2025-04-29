@@ -18,10 +18,14 @@ import com.example.knockly.feedHistoryPage.FeedHistoryActivity;
 import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
 import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
+import com.example.knockly.network.dto.PermissionResponse;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONObject;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,9 +35,13 @@ import org.json.JSONObject;
 public class DoorbellOptionsTabFragment extends Fragment {
 
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_BELL_ID = "DoorbellID";
+    private static final String ARG_USER_PERMS = "UserPerms";
+    private static final String ARG_DOORBELL_ID = "DoorbellId";
+    private static final String ARG_DOORBELL_NAME = "DoorbellName";
 
+    private PermissionResponse[] mUserPerms;
     private String mDoorbellID;
+    private String mDoorbellName;
     private boolean tabMinimised = false;
     private JSONObject permissions;
 
@@ -45,13 +53,16 @@ public class DoorbellOptionsTabFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param DoorbellID Parameter 1.
+     * @param doorbellID Paramter 1.
+     * @param userPerms Parameter 1.
      * @return A new instance of fragment test.
      */
-    public static DoorbellOptionsTabFragment newInstance(String DoorbellID) {
+    public static DoorbellOptionsTabFragment newInstance(String doorbellID, String doorbellName, Serializable userPerms) {
         DoorbellOptionsTabFragment fragment = new DoorbellOptionsTabFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_BELL_ID, DoorbellID);
+        args.putString(ARG_DOORBELL_ID, doorbellID);
+        args.putString(ARG_DOORBELL_NAME, doorbellName);
+        args.putSerializable(ARG_USER_PERMS, userPerms);
         fragment.setArguments(args);
         return fragment;
     }
@@ -60,21 +71,9 @@ public class DoorbellOptionsTabFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mDoorbellID = getArguments().getString(ARG_BELL_ID);
-        }
-
-        //TODO: Implement actual API call (in main activity?)
-        try {
-            permissions = new JSONObject();
-            permissions.put("manageUsers", true);
-            permissions.put("manageFaces", true);
-            permissions.put("manageDoorbell", true);
-            permissions.put("viewFeedHistory", false);
-            permissions.put("viewDoorbellLogs", true);
-        }
-        catch(Exception e) {
-            System.out.println("Error getting user permissions:");
-            System.out.println(e);
+            mDoorbellID = getArguments().getString(ARG_DOORBELL_ID);
+            mDoorbellName = getArguments().getString(ARG_DOORBELL_NAME);
+            mUserPerms = (PermissionResponse[]) getArguments().getSerializable(ARG_USER_PERMS  );
         }
     }
 
@@ -93,7 +92,8 @@ public class DoorbellOptionsTabFragment extends Fragment {
                 view.findViewById(R.id.feedHistoryButton),
                 view.findViewById(R.id.doorbellLogsButton)
         };
-        Class[] destinationActivites = {
+
+        Class[] destinationActivities = {
                 ManageUsersActivity.class,
                 ManageFacesActivity.class,
                 ManageDoorbellActivity.class,
@@ -102,23 +102,24 @@ public class DoorbellOptionsTabFragment extends Fragment {
         };
 
         final String[] permissionNames = {
-                "manageUsers",
-                "manageFaces",
-                "manageDoorbell",
-                "viewFeedHistory",
-                "viewDoorbellLogs"
+                "manage_user_profiles",
+                "manage_face_profiles",
+                "manage_doorbell",
+                "view_feed_history",
+                "view_doorbell_logs"
         };
 
         for (int m = 0; m < buttons.length; m++){
             Button currentButton = buttons[m];
 
-            if (permissions.optBoolean(permissionNames[m])){
-                Class currentActivity = destinationActivites[m];
+            if (getPermission(permissionNames[m])){
+                Class currentActivity = destinationActivities[m];
                 currentButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         Intent intent = new Intent(getActivity(), currentActivity);
                         intent.putExtra("Doorbell_ID", mDoorbellID);
+                        intent.putExtra("Doorbell_Name", mDoorbellName);
                         startActivity(intent);
                     }
                 });
@@ -157,5 +158,17 @@ public class DoorbellOptionsTabFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private boolean getPermission(String permName){
+        if (mUserPerms != null) {
+            // Loop through array to find permission
+            for (PermissionResponse perm : mUserPerms){
+                if (Objects.equals(perm.permission, permName)){
+                    return perm.granted;
+                }
+            }
+        }
+        return false;
     }
 }

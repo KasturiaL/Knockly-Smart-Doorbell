@@ -29,6 +29,11 @@ public class ManageFacesActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get info about doorbell from intent that started activity
+        Intent intent = getIntent();
+        String doorbellId = intent.getStringExtra("Doorbell_ID");
+        String doorbellName = intent.getStringExtra("Doorbell_Name");
+
         // Add header fragment
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageFacesHeaderFragment, pageHeader).commit();
@@ -40,6 +45,8 @@ public class ManageFacesActivity extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(ManageFacesActivity.this, AddNewFaceActivity.class);
+                intent.putExtra("Doorbell_ID", doorbellId);
+                intent.putExtra("Doorbell_Name", doorbellName);
                 startActivity(intent);
             }
         });
@@ -51,6 +58,8 @@ public class ManageFacesActivity extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(ManageFacesActivity.this, BlocklistActivity.class);
+                intent.putExtra("Doorbell_ID", doorbellId);
+                intent.putExtra("Doorbell_Name", doorbellName);
                 startActivity(intent);
             }
         });

@@ -1,5 +1,6 @@
 package com.example.knockly.manageDoorbellPage;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -24,8 +25,13 @@ public class ManageDoorbellActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get info about doorbell from intent that started activity
+        Intent intent = getIntent();
+        String doorbellId = intent.getStringExtra("Doorbell_ID");
+        String doorbellName = intent.getStringExtra("Doorbell_Name");
+
         // Add header fragment
-        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("<doorbell #1> Settings", true, true);
+        PageHeaderFragment pageHeader = PageHeaderFragment.newInstance(doorbellName + " Settings", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageDoorbellHeaderFragment, pageHeader).commit();
 
     }

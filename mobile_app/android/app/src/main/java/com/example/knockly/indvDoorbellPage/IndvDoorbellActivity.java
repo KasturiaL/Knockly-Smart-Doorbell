@@ -2,10 +2,12 @@ package com.example.knockly.indvDoorbellPage;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,14 +26,25 @@ import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
 import com.example.knockly.R;
 import com.example.knockly.network.dto.LinkedUser;
+import com.example.knockly.network.dto.PermissionResponse;
+import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
+import com.example.knockly.utils.LoginManager;
 import com.google.android.material.snackbar.Snackbar;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedFragment.FragmentCallback, DoorControlFragment.FragmentCallback {
 
+    private AuthRepository repo = AuthRepository.getInstance(LoginManager.getInstance(this));
+
     private Insets systemBars;
     private  LiveFeedFragment liveFeedFragment;
+
+    private PermissionResponse[] userPerms;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,14 +64,35 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         String ownerID = intent.getStringExtra("owner_id");
         LinkedUser[] linkedUsers = (LinkedUser[]) intent.getSerializableExtra("linked_users");
 
+        // Get information about users current permissions from API
+        repo.getUserPerms(doorbellID).enqueue(new Callback<PermissionResponse[]>() {
+            @Override
+            public void onResponse(Call<PermissionResponse[]> call, Response<PermissionResponse[]> response) {
+                // If API call is successful
+                if (response.isSuccessful() && response.body()!=null){
+                    userPerms = response.body();
+
+                    // Add options tab at bottom of page
+                    DoorbellOptionsTabFragment tabFragment = DoorbellOptionsTabFragment.newInstance(doorbellID, doorbellName, userPerms);
+                    getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellOptionsFragment, tabFragment).commit();
+                }
+                // If API call is unsuccessful
+                else{
+                    Log.d("Indv Doorbell Activity", "Error fetching user perms" + response.code());
+                    Toast.makeText(IndvDoorbellActivity.this, "Error fetching user permissions" + response.code(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PermissionResponse[]> call, Throwable t) {
+                Log.d("Indv Doorbell Activity", "Error fetching user perms" + t.getMessage());
+                Toast.makeText(IndvDoorbellActivity.this, "Error fetching user permissions" + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
         // Add header fragment
-        // TODO: Change headerTitle to the doorbell's name, same with the other button intents' values
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance(doorbellName, true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellHeaderFragment, pageHeader).commit();
-
-        // Add options tab at bottom
-        DoorbellOptionsTabFragment tabFragment = DoorbellOptionsTabFragment.newInstance(doorbellID);
-        getSupportFragmentManager().beginTransaction().replace(R.id.IndvDoorbellOptionsFragment, tabFragment).commit();
 
         // Add live feed fragment
         liveFeedFragment = LiveFeedFragment.newInstance(doorbellID);

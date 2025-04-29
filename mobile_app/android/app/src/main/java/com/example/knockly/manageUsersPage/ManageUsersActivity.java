@@ -29,6 +29,11 @@ public class ManageUsersActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Get info about doorbell from intent that started activity
+        Intent intent = getIntent();
+        String doorbellId = intent.getStringExtra("Doorbell_ID");
+        String doorbellName = intent.getStringExtra("Doorbell_Name");
+
         // Add header fragment
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Users", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageUsersHeaderFragment, pageHeader).commit();
@@ -51,6 +56,8 @@ public class ManageUsersActivity extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(ManageUsersActivity.this, BlocklistActivity.class);
+                intent.putExtra("Doorbell_ID", doorbellId);
+                intent.putExtra("Doorbell_Name", doorbellName);
                 startActivity(intent);
             }
         });
