@@ -94,7 +94,7 @@ def log(msg):
 # Function to send a command to the arduino
 def command(cmd):
     # Sends the command to the arduino
-    arduino.write(cmd.encode())
+    arduino.write(bytes(cmd, 'utf-8'))
 
     # Gives the system time to run the command
     time.sleep(0.05)
@@ -114,7 +114,8 @@ def command(cmd):
 # ——————————————————————————————————————————————————————
 # Main Code
 # ——————————————————————————————————————————————————————
-command(0)
+command("0")
+
 # Prints starting message for clarity when debugging
 print("Listening for log messages...")
 
@@ -132,7 +133,7 @@ while True:
 
     if msg: # There is a message
         # Logs the message
-        log("msg")
+        log(msg)
 
         # Checks if the log message is linked to an action
         if msg == "Object is a person.": # Arduino detects a person
