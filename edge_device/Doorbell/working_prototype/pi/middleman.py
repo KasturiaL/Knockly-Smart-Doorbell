@@ -111,13 +111,20 @@ def command(cmd):
     elif cmd == "4": # Detected blocked face
         log("Blocked face detected.")
 
+def setup() {
+    # Sends reset command to Arduino
+    command("0")
+
+    # Prints starting message for clarity when debugging
+    print("Listening for log messages...")
+}
+
 # ——————————————————————————————————————————————————————
 # Main Code
 # ——————————————————————————————————————————————————————
-command("0")
 
-# Prints starting message for clarity when debugging
-print("Listening for log messages...")
+# Starts up Arduino script for syncronized logs
+setup()
 
 # Starts loop
 while True:
