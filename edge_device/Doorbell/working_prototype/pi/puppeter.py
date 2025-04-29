@@ -35,10 +35,11 @@ directory    = Path(__file__).parent
 log_file     = directory / "log.txt"
 command_file = directory / "command.txt"
 
-cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
+
 
 isRecord=threading.Event()
+
+last_detection_time=0
 
 DB_CONFIG = {
     "host":     "localhost",
@@ -146,12 +147,17 @@ def fetch_all_encodings():
     return encs, names
     
 def timer(duration=30, output_path="recorded_video.mp4"):
+	print(f"[DEBUG] isRecord status before detection: {isRecord.is_set()}")
 	isRecord.set()
+	print(f"[DEBUG] isRecord status before detection: {isRecord.is_set()}")
 	
 	known_encs, known_names = fetch_all_encodings()
 	
 	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 	out = cv2.VideoWriter("recorded_video.mp4", fourcc, 30,(640,480))
+	
+	cam = Picamera2()
+	cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
     
 	cam.start()
 	print(f"[INFO] Recording {duration//60}-minute video with recognition...")
@@ -168,10 +174,13 @@ def timer(duration=30, output_path="recorded_video.mp4"):
 			
 	out.release()
 	cam.stop()
+	cam.close()
 	cv2.destroyAllWindows()
+	time.sleep(0.5)
 	print(f"[INFO] Saved video to {output_path}")
 	
 	isRecord.clear()
+	print(f"[DEBUG] isRecord status before detection: {isRecord.is_set()}")
 	
     
 def record_and_recognize(frame, known_encs, known_names):
@@ -215,25 +224,27 @@ setup()
 # Starts loop
 while True:
     # Checks if there is a command from app or the facial recogition
-    cmd = check_command()
+	cmd = check_command()
 
-    if cmd: # There is a command
+	if cmd: # There is a command
         # Sends command to arduino and logs the command
-        command(cmd) 
+		command(cmd) 
 
     # Reads the log message from Arduino to add to logging
-    msg = read()
+	msg = read()
 
-    if msg: # There is a message
+	if msg: # There is a message
         # Logs the message
-        log(msg)
+		log(msg)
 
         # Checks if the log message is linked to an action
-        if msg == "Object is a person.": # Arduino detects a person
+		if msg == "Object is a person.": # Arduino detects a person
             # Checks if the system is already recording
-            if not isRecord.is_set(): # If system is not recording
+			now = time.time()
+			if not isRecord.is_set() and (now - last_detection_time) > 5: # If system is not recording
+				last_detection_time = now
                 # Starts recording and face recognition
-                threading.Thread(target=timer, daemon=True).start()
+				threading.Thread(target=timer, daemon=True).start()
 
     # Adds a tiny delay to avoid busy-loop
-    time.sleep(0.01)
+	time.sleep(0.01)
