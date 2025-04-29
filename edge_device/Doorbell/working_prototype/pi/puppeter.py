@@ -38,7 +38,7 @@ command_file = directory / "command.txt"
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"format":'XRGB8888',"size":(640,480)}))
 
-isRecord=False
+isRecord=threading.Event()
 
 DB_CONFIG = {
     "host":     "localhost",
@@ -146,8 +146,7 @@ def fetch_all_encodings():
     return encs, names
     
 def timer(duration=30, output_path="recorded_video.mp4"):
-	global isRecord
-	isRecord=True
+	isRecord.set()
 	
 	known_encs, known_names = fetch_all_encodings()
 	
@@ -157,6 +156,7 @@ def timer(duration=30, output_path="recorded_video.mp4"):
 	cam.start()
 	print(f"[INFO] Recording {duration//60}-minute video with recognition...")
 	start = time.time()
+	
 	while time.time()-start < duration:
 		frame = cam.capture_array()
 		frame = record_and_recognize(frame, known_encs, known_names)
@@ -171,7 +171,7 @@ def timer(duration=30, output_path="recorded_video.mp4"):
 	cv2.destroyAllWindows()
 	print(f"[INFO] Saved video to {output_path}")
 	
-	isRecord=False
+	isRecord.clear()
 	
     
 def record_and_recognize(frame, known_encs, known_names):
@@ -231,7 +231,7 @@ while True:
         # Checks if the log message is linked to an action
         if msg == "Object is a person.": # Arduino detects a person
             # Checks if the system is already recording
-            if not isRecord: # If system is not recording
+            if not isRecord.is_set(): # If system is not recording
                 # Starts recording and face recognition
                 threading.Thread(target=timer, daemon=True).start()
 
