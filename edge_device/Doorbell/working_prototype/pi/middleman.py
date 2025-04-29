@@ -100,7 +100,9 @@ def command(cmd):
     time.sleep(0.05)
 
     # Checks which command is sent
-    if   cmd == "1": # Manual open door
+    if     cmd == "0": # System startup
+        log("Middleman startup complete.")
+    elif   cmd == "1": # Manual open door
         log("Phone has requested to open the door.")
     elif cmd == "2": # Manual close door
         log("Phone has requested to close the door.")
@@ -112,6 +114,7 @@ def command(cmd):
 # ——————————————————————————————————————————————————————
 # Main Code
 # ——————————————————————————————————————————————————————
+command(0)
 # Prints starting message for clarity when debugging
 print("Listening for log messages...")
 

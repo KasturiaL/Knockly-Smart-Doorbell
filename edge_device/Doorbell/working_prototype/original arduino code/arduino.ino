@@ -68,6 +68,9 @@ void setup() {
 	Serial.begin(9600); 
 	// Setting max serial data wait time 
 	Serial.setTimeout(1);
+
+  // Sends end of Arduino setup to python to log
+  Serial.println("Arduino startup complete.")
 }
 
 void loop() {
@@ -179,7 +182,11 @@ void override() {
   overrideCommand = Serial.readString().toInt();
 
   // Checks which command is sent
-  if (overrideCommand == 1) { // Open command
+  if (overrideCommand == 0) { // System startup
+    // Runs function
+
+  }
+  else if (overrideCommand == 1) { // Open command
     // Runs function
     open();
 
@@ -191,7 +198,11 @@ void override() {
 
     // Enables alarm
     disableAlarm = false;
+  } else if (overrideCommand == 3){ // Face scanned
+    // Runs function
+    open_close();
   }
+
 
   // Clears Serial for next command
   Serial.read();
@@ -291,3 +302,12 @@ void person_detector(int distance, bool motion, bool &objectDetected) {
   // Gives system time so log messages will not be put in the wrong sequence
   delay(500);
 }
+
+void reset() {
+  // Initiates (almost) instant restart
+  wdt_enable(WDTO_15MS);
+
+  // Prevents unwanted code executions
+  while (1);
+}
+
