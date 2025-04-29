@@ -3,6 +3,7 @@ package com.example.knockly.network.repository;
 import com.example.knockly.network.ApiClient;
 import com.example.knockly.network.AuthInterceptor;
 import com.example.knockly.network.dto.DoorbellOut;
+import com.example.knockly.network.dto.FaceResponse;
 import com.example.knockly.network.dto.LoginRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
@@ -55,5 +56,9 @@ public class AuthRepository {
 
     public Call<PermissionResponse[]> getUserPerms(String doorbellId){
         return svc.getUserPerms(doorbellId);
+    }
+
+    public Call<FaceResponse[]> getDoorbellFaces(String doorbellId){
+        return svc.getDoorbellFaces(doorbellId);
     }
 }

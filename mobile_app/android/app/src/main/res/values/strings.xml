@@ -13,5 +13,6 @@
     <string name="buttonManageDoorbellTitle">Manage Doorbell</string>
     <string name="doorStatusClosedMsg">Door Closed</string>
     <string name="doorStatusOpenMsg">Door Open</string>
+    <string name="manageFacesPageTitle">Doorbell\'s Faces:</string>
 
 </resources>

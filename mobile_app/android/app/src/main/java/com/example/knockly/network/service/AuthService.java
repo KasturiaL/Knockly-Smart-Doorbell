@@ -1,6 +1,7 @@
 package com.example.knockly.network.service;
 
 import com.example.knockly.network.dto.DoorbellOut;
+import com.example.knockly.network.dto.FaceResponse;
 import com.example.knockly.network.dto.LoginRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
@@ -27,4 +28,7 @@ public interface AuthService {
 
     @GET("doorbells/{doorbellId}/permissions")
     Call<PermissionResponse[]> getUserPerms(@Path("doorbellId") String doorbellId);
+
+    @GET("doorbells/{doorbellId}/faces")
+    Call<FaceResponse[]> getDoorbellFaces(@Path("doorbellId") String doorbellId);
 }

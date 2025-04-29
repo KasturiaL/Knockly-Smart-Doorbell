@@ -75,8 +75,6 @@ public class HomePageButtonsFragment extends Fragment {
         // For each doorbell create button and add to display
         DoorbellOut currentObject;
 
-
-
         try {
             // Calculate button dimensions based on screen size
             int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
