@@ -3,29 +3,22 @@ package com.example.knockly.homePage;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.gridlayout.widget.GridLayout;
 
+import com.example.knockly.R;
 import com.example.knockly.addDoorbellPage.AddDoorbellActivity;
 import com.example.knockly.indvDoorbellPage.IndvDoorbellActivity;
-import com.example.knockly.R;
 import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.utils.ButtonUtils;
-import com.example.knockly.utils.JsonUtils;
 import com.example.knockly.utils.ViewUtils;
 import com.google.android.material.button.MaterialButton;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * A {@link Fragment} subclass that takes an array of json objects representing

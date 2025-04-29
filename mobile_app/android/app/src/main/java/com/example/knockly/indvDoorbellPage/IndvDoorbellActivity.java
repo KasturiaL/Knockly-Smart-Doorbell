@@ -4,10 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -24,7 +22,6 @@ import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
-import com.example.knockly.indvDoorbellPage.DoorbellOptionsTabFragment;
 import com.example.knockly.utils.LoginManager;
 import com.example.knockly.utils.SSHUtils;
 import com.jcraft.jsch.JSchException;

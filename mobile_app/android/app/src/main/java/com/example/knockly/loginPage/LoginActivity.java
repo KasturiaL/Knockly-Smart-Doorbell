@@ -1,9 +1,6 @@
 package com.example.knockly.loginPage;
 
 import android.content.Intent;
-
-import androidx.annotation.NonNull;
-import androidx.biometric.BiometricManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,7 +10,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -22,19 +21,18 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.R;
 import com.example.knockly.homePage.HomeActivity;
+import com.example.knockly.network.dto.Token;
 import com.example.knockly.network.dto.UserInfo;
+import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
 
-import com.example.knockly.network.AuthInterceptor;
-import com.example.knockly.network.repository.AuthRepository;
-import com.example.knockly.network.dto.Token;
+import java.util.Objects;
+import java.util.concurrent.Executor;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-import java.util.Objects;
-import java.util.concurrent.Executor;
 
 
 public class LoginActivity extends AppCompatActivity {

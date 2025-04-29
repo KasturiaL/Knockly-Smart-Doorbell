@@ -1,10 +1,7 @@
 package com.example.knockly.homePage;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,16 +11,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.knockly.loginPage.LoginActivity;
+import com.example.knockly.R;
 import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
-import com.example.knockly.R;
-import com.example.knockly.utils.JsonUtils;
 import com.example.knockly.utils.LoginManager;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.Objects;
 
