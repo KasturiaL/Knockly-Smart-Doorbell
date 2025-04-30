@@ -14,8 +14,8 @@ import numpy as np
 from pathlib import Path
 from picamera2 import Picamera2
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers    import FTPHandler
-from pyftpdlib.servers     import FTPServer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
 
 # ------------------------- Configuration -------------------------
 
@@ -51,8 +51,10 @@ command_file   = base_dir / COMMAND_FILE
 
 # ------------------------- Hardware Setup -------------------------
 
+# Arduino serial connection
 arduino = serial.Serial(pi_port, baudrate=baud_rate, timeout=timeout_s)
 
+# Pi camera setup
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(
     main={"format": 'XRGB8888', "size": (640, 480)}
@@ -138,7 +140,7 @@ def extract_encodings_from_video(video_path, doorbell_id):
         return
 
     ret, frame = cap.read()
-    if not ret or frame is None or frame.size == 0:
+    if not ret:
         log("[ERROR] Could not read first frame.")
         cap.release()
         return
@@ -152,34 +154,23 @@ def extract_encodings_from_video(video_path, doorbell_id):
     log(f"[INFO] Video OK (duration {duration:.1f}s, brightness {brightness:.1f})")
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-    name  = Path(video_path).stem
+    name  = os.path.splitext(os.path.basename(video_path))[0]
     saved = 0
     step  = max(int(frame_count)//20, 1)
 
     for i in range(0, int(frame_count), step):
         cap.set(cv2.CAP_PROP_POS_FRAMES, i)
         ret, frame = cap.read()
-        if not ret or frame is None or frame.size == 0:
-            log(f"[WARN] Bad frame at index {i}, skipping")
+        if not ret:
             continue
 
-        # BGR→RGB + contiguous uint8 for dlib
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        rgb = np.ascontiguousarray(rgb, dtype=np.uint8)
-
-        # face_locations can segfault inside C++ — guard it
-        try:
-            locs = face_recognition.face_locations(rgb)
-        except Exception as e:
-            log(f"[ERROR] face_locations failed at frame {i}: {e}")
-            continue
-
+        locs = face_recognition.face_locations(rgb)
         if locs:
             encs = face_recognition.face_encodings(rgb, locs)
             for enc in encs:
                 store_face_encoding(doorbell_id, name, enc)
                 saved += 1
-
         if saved >= 20:
             break
 
@@ -211,19 +202,20 @@ def fetch_all_encodings():
     cur.execute("SELECT face_profile_name, face_data FROM face_profiles")
     encs, names = [], []
     for name, blob in cur.fetchall():
-        encs .append(pickle.loads(blob))
+        encs.append(pickle.loads(blob))
         names.append(name)
     cur.close()
     conn.close()
     return encs, names
 
 def process_latest_video(doorbell_id):
-    """Pick up any .mp4 in ftp_dir, process & move to processed_dir."""
+    """Find latest .mp4 in FTP_DIR and process it."""
     for mp4 in ftp_dir.glob("*.mp4"):
         try:
             extract_encodings_from_video(str(mp4), doorbell_id)
-            processed_dir .mkdir(exist_ok=True)
-            shutil.move(str(mp4), str(processed_dir/mp4.name))
+            # move to processed
+            processed_dir.mkdir(exist_ok=True)
+            shutil.move(str(mp4), str(processed_dir / mp4.name))
         except Exception as e:
             log(f"[ERROR] Auto-process {mp4.name}: {e}")
 
@@ -247,8 +239,6 @@ def run_live_recognition():
         frame = cam.capture_array()
         small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
         rgb   = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
-        rgb   = np.ascontiguousarray(rgb, dtype=np.uint8)
-
         locs  = face_recognition.face_locations(rgb)
         encs  = face_recognition.face_encodings(rgb, locs)
 
@@ -261,16 +251,20 @@ def run_live_recognition():
                 if matches[idx]:
                     name = known_names[idx]
 
-            color = (0,255,0) if name!="Unknown" else (0,0,255)
-            t,r,b,l = [x*4 for x in (t,r,b,l)]
-            cv2.rectangle(frame,(l,t),(r,b),color,2)
-            cv2.putText(frame, name, (l+6, t-6),
+            # draw box & label
+            color = (0, 255, 0) if name != "Unknown" else (0, 0, 255)
+            t, r, b, l = [x * 4 for x in (t, r, b, l)]
+            cv2.rectangle(frame, (l, t), (r, b), color, 2)
+            cv2.putText(frame, name, (l + 6, t - 6),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-            now = time.time()
-            if name!="Unknown" and (now - last_open_time) >= OPEN_DOOR_COOLDOWN:
-                send_command("3")
-                last_open_time = now
+            # open door if known and cooldown elapsed
+            if name != "Unknown":
+                now = time.time()
+                if now - last_open_time >= OPEN_DOOR_COOLDOWN:
+                    send_command("3")  # Known face
+                
+                    last_open_time = now
 
         cv2.imshow("Live Feed", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -284,13 +278,13 @@ def run_live_recognition():
 if __name__ == "__main__":
     setup()
 
-    # background threads
+    # start background threads
     threading.Thread(target=start_ftp_server,    daemon=True).start()
     threading.Thread(target=arduino_logger,      daemon=True).start()
     threading.Thread(target=auto_process_loop,   daemon=True).start()
     threading.Thread(target=run_live_recognition,daemon=True).start()
 
-    # simple menu to exit
+    # simple menu loop
     while True:
         choice = input("[1] Exit\nChoice: ").strip()
         if choice == '1':
