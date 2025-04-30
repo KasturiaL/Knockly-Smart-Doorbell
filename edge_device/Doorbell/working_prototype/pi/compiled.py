@@ -36,7 +36,7 @@ DB_CONFIG = {
 
 MIN_VIDEO_DURATION    = 15    # seconds
 BRIGHTNESS_THRESHOLD  = 32    # mean gray value 0–255
-OPEN_DOOR_COOLDOWN    = 30    # seconds between re-opening
+OPEN_DOOR_COOLDOWN    = 5    # seconds between re-opening
 
 # ------------------------- Paths & Files -------------------------
 
@@ -245,8 +245,6 @@ def run_live_recognition():
                 now = time.time()
                 if now - last_open_time >= OPEN_DOOR_COOLDOWN:
                     send_command("3")  # Known face
-                    send_command("1")  # Open door
-                    threading.Timer(5, lambda: send_command("2")).start()
                     last_open_time = now
 
         cv2.imshow("Live Feed", frame)
