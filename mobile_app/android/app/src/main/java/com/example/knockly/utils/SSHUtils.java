@@ -24,48 +24,59 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class SSHUtils {
 
     public static List<String> ping(String subnetIP) {
-        List<String> hosts = new ArrayList<>();
+        final ExecutorService es = Executors.newFixedThreadPool(128);
+        final List<Future<String>> futures = new ArrayList<>();
+        final List<String> hosts = new ArrayList<>();
+        final int timeout = 200;
 
-        try
-        {
-            int timeout=150;
-            for (int i=1;i<255;i++)
-            {
-                String host=subnetIP + "." + i;
-                if (InetAddress.getByName(host).isReachable(timeout) || isReachable(host,80,timeout))
-                {
-                    Log.d(TAG, "ping() :: "+host + " is reachable");
-                    hosts.add(host);
+        for (int i = 1; i < 255; i++) {
+            String ip = subnetIP + "." + i;
+            futures.add(ipIsReachable(es, ip, timeout));
+        }
+
+        for (Future<String> future : futures) {
+            try {
+                String result = future.get();
+                if (result != null) {
+                    hosts.add(result);
                 }
-            }
-        }
-        catch (UnknownHostException e)
-        {
-            Log.d(TAG, "ping() :: UnknownHostException e : "+e);
-            e.printStackTrace();
-        }
-        catch (IOException e)
-        {
-            Log.d(TAG, "ping() :: IOException e : "+e);
-            e.printStackTrace();
+            } catch (Exception ignored) {}
         }
 
+        es.shutdown();
         return hosts;
     }
 
-    private static boolean isReachable(String addr, int openPort, int timeOutMillis) {
+    private static boolean isReachable(String ip, int port, int timeout) {
         // Any Open port on other machine
         // openPort =  22 - ssh, 80 or 443 - webserver, 25 - mailserver etc.
-        try (Socket soc = new Socket()) {
-            soc.connect(new InetSocketAddress(addr, openPort), timeOutMillis);
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(ip, port), timeout);
+            socket.close();
             return true;
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             return false;
         }
+    }
+
+    public static Future<String> ipIsReachable(final ExecutorService es, final String ip, final int timeout) {
+        return es.submit(() -> {
+            try {
+                if (InetAddress.getByName(ip).isReachable(timeout) || isReachable(ip, 80, timeout)) {
+                    Log.d(TAG, "ping() :: "+ip + " is reachable");
+                    return ip;
+                }
+            } catch (Exception ignored) {}
+            return null;
+        });
     }
 
     public static int getLocalHost(Context context) {
