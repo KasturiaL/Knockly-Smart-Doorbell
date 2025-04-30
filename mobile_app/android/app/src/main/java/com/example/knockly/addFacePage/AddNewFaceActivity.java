@@ -1,17 +1,27 @@
 package com.example.knockly.addFacePage;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -33,8 +43,13 @@ import java.io.FileInputStream;
 public class AddNewFaceActivity extends AppCompatActivity {
 
     private static final int VIDEO_REQUEST = 101; // just an ID to recognize the video intent later
+    private boolean videoExists = false;
     private EditText etName;
     private File savedVideoFile;
+    private Button btnRecord;
+    private Button btnUpload;
+    private Button reRecordBtn;
+    private TextView successMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,52 +67,64 @@ public class AddNewFaceActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.AddFaceHeaderFragment, pageHeader).commit();
 
         // request camera and mic permissions (REALLY important or nothing works)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.CAMERA,
-                            Manifest.permission.RECORD_AUDIO
-                    }, 1); // 1 is the request code we just made up
+        if  (!permissionsGranted()){
+            getPermissions();
         }
 
-        etName = findViewById(R.id.etName); // input field for the user to type their name
-        Button btnRecord = findViewById(R.id.btnRecord);
-        Button btnUpload = findViewById(R.id.btnUpload);
+        etName = findViewById(R.id.etName);
+        btnRecord = findViewById(R.id.btnRecord);
+        btnUpload = findViewById(R.id.btnUpload);
+        reRecordBtn = findViewById(R.id.ReRecordBtn);
+        successMsg = findViewById(R.id.VidSavedSuccessMsg);
 
-        // record when record button is clicked
-        btnRecord.setOnClickListener(v -> recordVideo());
+        // Make use first record button is visible (and other hidden)
+        switchFromReRecordBtn();
 
-        // upload when upload button is clicked
-        btnUpload.setOnClickListener(v -> uploadToFTP());
-    }
+        if (permissionsGranted()){
+            disableRecordVidBtn("Please enter a name before recording the video", () ->{});
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        }
+        else {
+            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", this::getPermissions);
+        }
 
-        if (requestCode == VIDEO_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(this, "Video saved successfully.", Toast.LENGTH_SHORT).show();
-                // optionally: enable the upload button here if you want
-            } else if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "Video recording cancelled.", Toast.LENGTH_SHORT).show();
-                savedVideoFile = null; // clear the file if recording was canceled
-            } else {
-                Toast.makeText(this, "Failed to record video.", Toast.LENGTH_SHORT).show();
-                savedVideoFile = null;
+        disableSubmitVidBtn("Please enter name and record the video before trying to upload");
+
+        etName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
             }
-        }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (hasGivenName()){
+                    enableRecordVidBtn();
+                }
+                else {
+                    disableRecordVidBtn("Please enter a name before recording the video", () ->{});
+                }
+            }
+        });
     }
 
     // This method launches the camera to record a video
     private void recordVideo() {
-        String name = etName.getText().toString().trim(); // grab name from the input field
-        if (name.isEmpty()) {
-            Toast.makeText(this, "Enter a name first", Toast.LENGTH_SHORT).show(); // no name? no go.
+        if (!hasGivenName()){
+            Toast.makeText(this, "Please enter a name before recording the video", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Hide soft keyboard if still on screen
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(AddNewFaceActivity.this.getCurrentFocus().getWindowToken(), 0);
+
+        String name = etName.getText().toString().trim(); // grab name from the input field
 
         // create or get directory in app's private Movies folder for our videos
         File dir = new File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "FaceVideos");
@@ -124,9 +151,13 @@ public class AddNewFaceActivity extends AppCompatActivity {
     // this uploads the video we just recorded to our Raspberry Pi via FTP
     private void uploadToFTP() {
         // check if we even have a video file to upload
-        if (savedVideoFile == null || !savedVideoFile.exists()) {
-            Toast.makeText(this, "Record a video first", Toast.LENGTH_SHORT).show();
+        if (!hasRecordedVid()) {
+            Toast.makeText(this, "Record a video first before adding the face", Toast.LENGTH_SHORT).show();
             return;
+        }
+
+        if (!hasGivenName()){
+            Toast.makeText(this, "A mame must be given before face can be added.", Toast.LENGTH_SHORT).show();
         }
 
         // use a separate thread for FTP because we don’t wanna block the UI
@@ -174,4 +205,196 @@ public class AddNewFaceActivity extends AppCompatActivity {
         }).start(); // don’t forget to start the thread!
     }
 
+    private boolean validateVideo(File videoFile) {
+        try {
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(videoFile.getAbsolutePath());
+
+            // Duration check
+            String durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long durationMs = Long.parseLong(durationStr);
+            if (durationMs < 15000) {
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Error: Video must be at least 15 seconds long. Please record again", Toast.LENGTH_LONG).show()
+                );
+                retriever.release();
+                return false;
+            }
+
+            // Brightness check on first frame
+            Bitmap frame = retriever.getFrameAtTime(0);
+            if (frame != null) {
+                long totalBrightness = 0;
+                int count = 0;
+
+                for (int y = 0; y < frame.getHeight(); y += 10) {
+                    for (int x = 0; x < frame.getWidth(); x += 10) {
+                        int pixel = frame.getPixel(x, y);
+                        int r = (pixel >> 16) & 0xff;
+                        int g = (pixel >> 8) & 0xff;
+                        int b = pixel & 0xff;
+                        int brightness = (r + g + b) / 3;
+                        totalBrightness += brightness;
+                        count++;
+                    }
+                }
+
+                long avgBrightness = totalBrightness / count;
+                if (avgBrightness < 32) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Error: Video is too dark. Please record in better lighting.", Toast.LENGTH_LONG).show()
+                    );
+                    retriever.release();
+                    return false;
+                }
+            } else {
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Error: Could not extract frame for brightness check. Please record again", Toast.LENGTH_LONG).show()
+                );
+                retriever.release();
+                return false;
+            }
+
+            retriever.release();
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            runOnUiThread(() ->
+                    Toast.makeText(this, "Error validating video: " + e.getMessage() + "Please record again", Toast.LENGTH_LONG).show()
+            );
+            return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (permissionsGranted()){
+            enableRecordVidBtn();
+        }
+        else{
+            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", this::getPermissions);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == VIDEO_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                if (validateVideo(savedVideoFile)) {
+                    videoExists = true;
+                    Toast.makeText(this, "Video saved successfully.", Toast.LENGTH_SHORT).show();
+                    switchToReRecordBtn();
+                    enableSubmitVidBtn();
+                }
+            } else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "Video recording cancelled.", Toast.LENGTH_SHORT).show();
+                if (!videoExists) {
+                    savedVideoFile = null;
+                }
+            } else {
+                Toast.makeText(this, "Failed to record video.", Toast.LENGTH_SHORT).show();
+                if (!videoExists){
+                    savedVideoFile = null;
+                }
+            }
+        }
+    }
+
+    private void enableRecordVidBtn(){
+        btnRecord.setBackgroundColor(getColor(R.color.colorPrimary));
+        btnRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                recordVideo();
+            }
+        });
+    }
+
+    private void disableRecordVidBtn(String toastMsg, Function func){
+        btnRecord.setBackgroundColor(getColor(R.color.darkGrey));
+        btnRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show();
+                func.call();
+            }
+        });
+    }
+
+    private void enableSubmitVidBtn(){
+        btnUpload.setBackgroundColor(getColor(R.color.colorPrimary));
+        btnUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                uploadToFTP();
+            }
+        });
+    }
+
+    private void disableSubmitVidBtn(String toastMsg){
+        btnUpload.setBackgroundColor(getColor(R.color.darkGrey));
+        btnUpload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void switchToReRecordBtn(){
+        reRecordBtn.setVisibility(View.VISIBLE);
+        reRecordBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                recordVideo();
+            }
+        });
+
+        successMsg.setVisibility(View.VISIBLE);
+        btnRecord.setVisibility(View.GONE);
+    }
+
+    private void switchFromReRecordBtn(){
+        btnRecord.setVisibility(View.VISIBLE);
+
+        reRecordBtn.setVisibility(View.GONE);
+        successMsg.setVisibility(View.GONE);
+    }
+
+    private boolean permissionsGranted(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+        return true;
+    }
+
+    private void getPermissions(){
+        Log.d("Add New Face Activity", "getPermissions: Getting permissions");
+        ActivityCompat.requestPermissions(this,
+                new String[]{
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.RECORD_AUDIO
+                }, 1);
+    }
+
+    private boolean hasGivenName(){
+        String name = etName.getText().toString().trim(); // grab name from the input field
+        return !name.isEmpty();
+    }
+
+    private boolean hasRecordedVid(){
+        return savedVideoFile != null && savedVideoFile.exists();
+    }
+
+    private interface Function {
+        void call();
+    }
 }
+
