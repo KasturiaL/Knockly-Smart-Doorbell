@@ -99,7 +99,7 @@ def start_ftp_server():
     server.serve_forever()
 
 # ------------------------- Video → DB -------------------------
-def extract_encodings_from_video(video_path, user_id):
+def extract_encodings_from_video(video_path, doorbell_id):
     log(f"[INFO] Validating video: {video_path}")
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -134,13 +134,26 @@ def extract_encodings_from_video(video_path, user_id):
     for i in range(0, int(frame_count), step):
         cap.set(cv2.CAP_PROP_POS_FRAMES, i)
         ret, f = cap.read()
-        if not ret: continue
-        rgb  = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
-        locs = face_recognition.face_locations(rgb)
+        if not ret or f is None or f.size == 0:
+            log(f"[WARN] Skipping bad frame a index {i}")
+            continue
+        try:
+            rgb  = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+        except Exception as e:
+            log(f"[ERROR] cvtColor failed: {e}")
+            continue
+            
+        rgb = np.ascontiguousarray(rgb, dtype=np.uint8)
+        try:
+            locs = face_recognition.face_locations(rgb)
+        except Exception as e:
+            log(f"[ERROR] face_locationsfailed: {e}")
+            continue
+            
         if locs:
             encs = face_recognition.face_encodings(rgb, locs)
             for e in encs:
-                store_face_encoding(user_id, name, e)
+                store_face_encoding(doorbell_id, name, e)
                 saved += 1
         if saved >= 20:
             break
@@ -153,7 +166,7 @@ def store_face_encoding(uid, profile_name, encoding):
         conn = mysql.connector.connect(**DB_CONFIG)
         cur  = conn.cursor()
         cur.execute(
-            "INSERT INTO face_profiles (user_id, face_profile_name, face_data) "
+            "INSERT INTO face_profiles (doorbell_id, face_profile_name, face_data) "
             "VALUES (%s,%s,%s)",
             (uid, profile_name, pickle.dumps(encoding))
         )
@@ -164,6 +177,13 @@ def store_face_encoding(uid, profile_name, encoding):
     finally:
         cur.close(); conn.close()
 
+def process_latest_video(doorbell_id):
+    processed_dir.mkdir(exist_ok=True)
+    for mp4 in ftp_dir.glob("*.mp4"):
+        extract_encodings_from_video(str(mp4), doorbell_id)
+        shutil.move(str(mp4), str(processed_dir/mp4.name))
+
+# ------------------------- Live Recognition (Main Thread) -------------------------
 def fetch_all_encodings():
     conn = mysql.connector.connect(**DB_CONFIG)
     cur  = conn.cursor()
@@ -173,14 +193,7 @@ def fetch_all_encodings():
         encs.append(pickle.loads(blob)); names.append(name)
     cur.close(); conn.close()
     return encs, names
-
-def process_latest_video(user_id):
-    processed_dir.mkdir(exist_ok=True)
-    for mp4 in ftp_dir.glob("*.mp4"):
-        extract_encodings_from_video(str(mp4), user_id)
-        shutil.move(str(mp4), str(processed_dir/mp4.name))
-
-# ------------------------- Live Recognition (Main Thread) -------------------------
+    
 def run_live_recognition():
     known_encs, known_names = fetch_all_encodings()
     log("[INFO] Live recognition started")
@@ -211,8 +224,6 @@ def run_live_recognition():
                 now = time.time()
                 if now - last_open >= OPEN_DOOR_COOLDOWN:
                     send_command("3")
-                    send_command("1")
-                    threading.Timer(5, lambda: send_command("2")).start()
                     last_open = now
 
         cv2.imshow("Live Feed", frame)
@@ -227,7 +238,7 @@ def menu_loop():
     while True:
         choice = input("[1] Process Latest Video\n[2] Exit\nChoice: ").strip()
         if choice=='1':
-            uid = input("Enter user_id: ").strip()
+            uid = input("Enter doorbell_id: ").strip()
             process_latest_video(uid)
         elif choice=='2':
             os._exit(0)
@@ -238,9 +249,4 @@ def menu_loop():
 if __name__=="__main__":
     setup()
 
-    threading.Thread(target=start_ftp_server, daemon=True).start()
-    threading.Thread(target=arduino_logger,   daemon=True).start()
-    threading.Thread(target=menu_loop,        daemon=False).start()
-
-    # run recognition on the main thread so cv2.imshow stays safe
-    run_live_recognition()
+    process_latest_video(1)
