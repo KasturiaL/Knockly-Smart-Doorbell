@@ -174,19 +174,21 @@ def run_live_recognition():
                 idx = np.argmin(dists)
                 if matches[idx]: name = known_names[idx]
             if name != "Unknown":
-                send_command("3"); send_command("1")
-                threading.Timer(5, lambda: send_command("2")).start()
+                send_command("3")
+                time.sleep(2)
+        cv2.imshow("Live feed", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     cam.stop(); cv2.destroyAllWindows()
+    
 
 # Run setup first (NEWLY ADDED)
 setup()
 
 # Start threads clearly after setup
 threading.Thread(target=start_ftp_server, daemon=True).start()
-threading.Thread(target=run_live_recognition, daemon=True).start()
 threading.Thread(target=arduino_logger, daemon=True).start()
+threading.Thread(target=run_live_recognition, daemon=True).start()
 
 # Menu remains unchanged
 while True:
