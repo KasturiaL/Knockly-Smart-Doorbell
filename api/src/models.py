@@ -75,7 +75,7 @@ class Doorbell(Base):
 class DoorbellTokens(Base):
     __tablename__ = "doorbell_tokens"
 
-    doorbell_token_id   = Column(Integer, primary_key=True, autoimcrement=True)
+    doorbell_token_id   = Column(Integer, primary_key=True, autoincrement=True)
     token               = Column(String(36), nullable=False)
     doorbell_id         = Column(Integer, ForeignKey("doorbells.doorbell_id", ondelete="CASCADE"), nullable=False)
 
