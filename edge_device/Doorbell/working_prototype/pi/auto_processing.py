@@ -47,6 +47,11 @@ command_file   = base_dir / COMMAND_FILE
 ftp_dir.mkdir(exist_ok=True)
 processed_dir.mkdir(exist_ok=True)
 
+# ------------------------- helper to detect already-done videos ----------
+def has_been_processed(path: Path) -> bool:            # 
+    """True if a file with the same name already sits in processed_videos/."""  #
+    return (processed_dir / path.name).exists()        # 
+
 # ------------------------- Hardware Setup -------------------------
 arduino = serial.Serial(pi_port, baudrate=baud_rate, timeout=timeout_s)
 
@@ -205,14 +210,14 @@ def extract_encodings_from_video(video_path: str, doorbell_id: int):
 def process_latest_video(doorbell_id):
     for mp4 in ftp_dir.glob("*.mp4"):
         if not is_file_complete(mp4):
-            continue  # still being uploaded → skip for now
+            continue  # still being uploaded
+        if has_been_processed(mp4):                   
+            continue  # same-named file already handled once 
         try:
             extract_encodings_from_video(str(mp4), doorbell_id)
-            processed_dir.mkdir(exist_ok=True)
             shutil.move(str(mp4), str(processed_dir / mp4.name))
         except Exception as e:
-            log(f"[ERROR] Auto‑process {mp4.name}: {e}")
-
+            log(f"[ERROR] Auto-process {mp4.name}: {e}")
 
 def auto_process_loop():
     while True:
