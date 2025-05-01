@@ -2,13 +2,16 @@ package com.example.knockly.network.service;
 
 import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.dto.FaceResponse;
+import com.example.knockly.network.dto.IsSubscribedResponse;
 import com.example.knockly.network.dto.LoginRequest;
+import com.example.knockly.network.dto.NotifSubscriptionRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
 import com.example.knockly.network.dto.UserInfo;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -31,4 +34,13 @@ public interface AuthService {
 
     @GET("doorbells/{doorbellId}/faces")
     Call<FaceResponse[]> getDoorbellFaces(@Path("doorbellId") String doorbellId);
+
+    @POST("notifications/isSubscribed")
+    Call<IsSubscribedResponse> checkIsSubscribed(@Body NotifSubscriptionRequest body);
+
+    @POST("notifications/subscribe")
+    Call<Void> subscribe(@Body NotifSubscriptionRequest body);
+
+    @POST("notifications/unsubscribe")
+    Call<Void> unsubscribe(@Body NotifSubscriptionRequest body);
 }

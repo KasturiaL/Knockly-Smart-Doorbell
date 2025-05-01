@@ -14,4 +14,29 @@
         android:layout_height="75dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ToggleButton
+        android:id="@+id/ReceiveNotifsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="45dp"
+        android:text="ToggleButton"
+        android:textOff="No"
+        android:textOn="Yes"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/ReceiveNotifsLabel"
+        app:layout_constraintTop_toBottomOf="@+id/ManageDoorbellHeaderFragment" />
+
+    <TextView
+        android:id="@+id/ReceiveNotifsLabel"
+        android:layout_width="220dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="40dp"
+        android:gravity="center"
+        android:text="@string/receiveNotifsLabel"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ManageDoorbellHeaderFragment" />
 </androidx.constraintlayout.widget.ConstraintLayout>

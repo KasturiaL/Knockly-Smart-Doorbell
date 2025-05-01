@@ -14,6 +14,7 @@
     <string name="doorStatusClosedMsg">Door Closed</string>
     <string name="doorStatusOpenMsg">Door Open</string>
     <string name="manageFacesPageTitle">Doorbell\'s Faces:</string>
+    <string name="receiveNotifsLabel">Receive Motion Notifications: \n(this device only)</string>
 
     <string name="addFaceInstructionsTitle">To add a new face to your doorbell:</string>
     <string name="addFaceInstructions">&#8226; Give the face a name\n\n&#8226; Record a video of the face, this should be 15-30s. Try to include different angles of the face for more accuracy\n\n&#8226; Then just upload the video to your doorbell and you\'re done!\n\n (Note: you must be on the same wifi network as your doorbell to upload a face)</string>

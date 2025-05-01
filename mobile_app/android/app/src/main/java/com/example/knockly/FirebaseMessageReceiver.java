@@ -1,3 +1,5 @@
+package com.example.knockly;
+
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -33,8 +35,6 @@ public class FirebaseMessageReceiver extends FirebaseMessagingService {
         if(remoteMessage.getData().size()>0){
             String title = remoteMessage.getData().get("title");
             String message = remoteMessage.getData().get("message");
-        }
-
         }
     }
 }
