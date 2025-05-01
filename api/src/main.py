@@ -276,11 +276,13 @@ async def unsubscribeUser(
     return {"message": "Unsubscribed successfully"}
 
 @app.post("/notifications/notify/motionDetected")
-async def notifyMotionDetected(body: schemas.NotifyMotionDetected, db:AsyncSession):
+async def notifyMotionDetected(body: schemas.NotifyMotionDetected, db:AsyncSession = Depends(database.get_session)):
     # Find doorbell from token given
     doorbell_id = await crud.get_doorbell_by_token(db, body.token)
 
     if not doorbell_id:
         raise HTTPException(400, "Doorbell token invalid, doorbell not found")
+    
+    print(doorbell_id)
 
     return {"message": "Notification sent"}
