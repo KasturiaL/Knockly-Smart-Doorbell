@@ -28,3 +28,6 @@ app/build/
 
 # Ignore android test output
 /output/
+
+# Ignore private keys
+api/config/service_account.json
