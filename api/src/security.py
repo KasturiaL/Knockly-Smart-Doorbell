@@ -32,7 +32,7 @@ def verify_totp(secret: str, code: str) -> bool:
 def get_fcm_access_token():
     credentials = service_account.Credentials.from_service_account_file(
         FIREBASE_KEY_LOCATION,
-        scopes=["https://www.googleapis/com/auth/firebase.messaging"]
+        scopes=["https://www.googleapis.com/auth/firebase.messaging"]
     )
     credentials.refresh(Request())
     return credentials.token
