@@ -7,9 +7,11 @@ import pyotp, qrcode, io, base64                     # for QR URL (optional)
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import insert
+from httpx import AsyncClient
 
 import database, crud, schemas, security, models
-from config import JWT_SECRET, JWT_ALGORITHM
+from config import JWT_SECRET, JWT_ALGORITHM, FIRBEASE_URL
+from security import get_fcm_access_token
 
 app = FastAPI(title="Knockly API v2")
 
@@ -54,6 +56,27 @@ async def current_user(token: str = Depends(oauth2),
         raise HTTPException(status_code=500, detail="User settings not found", headers={"WWW-Authenticate": "Bearer"})
 
     return user
+
+async def send_fcm_notification(fcm_token: str, title: str, body: str):
+    access_token = get_fcm_access_token()
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json; UTF-8"
+    }
+
+    message = { "message": {
+        "token": fcm_token,
+        "notification": {
+            "title": title,
+            "body": body
+        }
+    }}
+
+    async with AsyncClient() as client:
+        response = await client.post(FIRBEASE_URL, json=message, headers=headers)
+        response.raise_for_status()
+        return response.json()
 
 # -------- AUTH ------------------------------------------------
 @app.post("/auth/register", response_model=schemas.Token, status_code=201)

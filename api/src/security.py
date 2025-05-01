@@ -1,7 +1,9 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
-import pyotp                                      
+import pyotp
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request                                      
 from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXP_MINUTES
 
 _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -25,3 +27,12 @@ def new_totp_secret() -> str:
 
 def verify_totp(secret: str, code: str) -> bool:
     return pyotp.TOTP(secret).verify(code, valid_window=1)   # ±30 sec
+
+#------ FCM Server Token helpers -----
+def get_fcm_access_token():
+    credentials = service_account.Credentials.from_service_account_file(
+        "config/service_account.json",
+        scopes=["https://www.googleapis/com/auth/firebase.messaging"]
+    )
+    credentials.refresh(Request())
+    return credentials.token
