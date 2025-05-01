@@ -92,7 +92,7 @@ class NotificationIsSubscribed(BaseModel):
     doorbell_id: int
 
 class NotificationIsSubscribedResponse(BaseModel):
-    isSubscribed: bool
+    is_subscribed: bool
 
 class NotificationSubscribe(BaseModel):
     fcm_token: str

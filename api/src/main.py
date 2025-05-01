@@ -241,9 +241,9 @@ async def checkSubscribed(
     token = await crud.get_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
 
     if token:
-        response = {"isSubscribed": True}
+        response = {"is_subscribed": True}
     else:
-        response = {"isSubscribed": False}
+        response = {"is_subscribed": False}
     
     return response
 
@@ -271,7 +271,7 @@ async def subscribeUser(
     
     return {"message": "Subscription successful"}
     
-@app.delete("/notifications/unsubscribe")
+@app.post("/notifications/unsubscribe")
 async def unsubscribeUser(
     body: schemas.NotificationUnsubscribe,
     db: AsyncSession = Depends(database.get_session),
