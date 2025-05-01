@@ -282,5 +282,5 @@ async def notifyMotionDetected(body: schemas.NotifyMotionDetected, db:AsyncSessi
 
     if not doorbell_id:
         raise HTTPException(400, "Doorbell token invalid, doorbell not found")
-    
-    print(doorbell_id)
+
+    return {"message": "Notification sent"}
