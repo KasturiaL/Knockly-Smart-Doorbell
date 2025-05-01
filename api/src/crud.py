@@ -202,7 +202,7 @@ async def get_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, user
     result = await db.execute(stmt)
     return result.scalars().first()
 
-async def create_fcm_token(db: AsyncSession, fcm_token: str, user_id: str, doorbell_id: str):
+async def create_fcm_token(db: AsyncSession, fcm_token: str, user_id: int, doorbell_id: int):
     token = models.NotifTokens(
         fcm_token = fcm_token,
         user_id = user_id,
@@ -211,6 +211,7 @@ async def create_fcm_token(db: AsyncSession, fcm_token: str, user_id: str, doorb
 
     db.add(token)
     await db.commit()
+    await db.refresh(token)
     return token
 
 async def delete_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, user_id: int):

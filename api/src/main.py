@@ -239,7 +239,7 @@ async def subscribeUser(
     me: models.User = Depends(current_user)):
 
     # Check doorbell exists
-    doorbell = await crud.get_doorbell_by_id(body.doorbell_id)
+    doorbell = await crud.get_doorbell_by_id(db ,body.doorbell_id)
     if not doorbell:
         raise HTTPException(400, "Doorbell not found")
     
@@ -253,7 +253,7 @@ async def subscribeUser(
     if not token:
         raise HTTPException(400, "Failed to subscribe user")
     
-    return {"message": "Subscription successfull"}
+    return {"message": "Subscription successful"}
     
 @app.delete("/notifications/unsubscribe")
 async def unsubscribeUser(
