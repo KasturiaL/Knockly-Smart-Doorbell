@@ -72,6 +72,14 @@ class Doorbell(Base):
         cascade="all, delete-orphan"
     )
 
+class DoorbellTokens(Base):
+    __tablename__ = "doorbell_tokens"
+
+    doorbell_token_id   = Column(Integer, primary_key=True, autoimcrement=True)
+    token               = Column(String(36), nullable=False)
+    doorbell_id         = Column(Integer, ForeignKey("doorbells.doorbell_id", ondelete="CASCADE"), nullable=False)
+
+
 class FaceProfile(Base):                               # ←-- NEW
     __tablename__ = "face_profiles"
 
@@ -104,3 +112,11 @@ class UserPermOverride(Base):
     user_id       = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
     permission_id = Column(Integer, ForeignKey("permissions.permission_id"), primary_key=True)
     is_granted    = Column(Boolean, nullable=False)
+
+class NotifTokens(Base):
+    __tablename__ = "notif_tokens"
+
+    notif_id    = Column(Integer, primary_key=True, autoincrement=True)
+    fcm_token   = Column(String(255), nullable=False)
+    user_id     = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    doorbell_id = Column(Integer, ForeignKey("doorbells.doorbell_id", ondelete="CASCADE"), nullable=False)

@@ -230,3 +230,47 @@ async def block_face(face_id: int, block: bool = True,
     if not fp:
         raise HTTPException(404, "face not found")
     return {"face_id": face_id, "is_blocked": fp.is_blocked}
+
+# ---------NOTIFICATIONS ---------------
+@app.post("/notifications/subscribe", status_code=201)
+async def subscribeUser(
+    body: schemas.NotificationSubscribe, 
+    db: AsyncSession = Depends(database.get_session), 
+    me: models.User = Depends(current_user)):
+
+    # Check doorbell exists
+    doorbell = await crud.get_doorbell_by_id(body.doorbell_id)
+    if not doorbell:
+        raise HTTPException(400, "Doorbell not found")
+    
+    # Check fcm token hasn't already been added
+    existing_token = await crud.get_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
+    if existing_token:
+        raise HTTPException(400, "FCM token already exists")
+
+    token = await crud.create_fcm_token(db, body.fcm_token, me.user_id, body.doorbell_id)
+
+    if not token:
+        raise HTTPException(400, "Failed to subscribe user")
+    
+    return {"message": "Subscription successfull"}
+    
+@app.delete("/notifications/unsubscribe")
+async def unsubscribeUser(
+    body: schemas.NotificationUnsubscribe,
+    db: AsyncSession = Depends(database.get_session),
+    me: models.User = Depends(current_user)):
+
+    # Check doorbell exists
+    doorbell = await crud.get_doorbell_by_id(db, body.doorbell_id)
+    if not doorbell:
+        raise HTTPException(400, "Doorbell not found")
+    
+    # Check that fcm token exists
+    existing_token = await crud.get_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
+    if not existing_token:
+        raise HTTPException(400, "Token could not be found")
+    
+    await crud.delete_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
+
+    return {"message": "Unsubscribed successfully"}

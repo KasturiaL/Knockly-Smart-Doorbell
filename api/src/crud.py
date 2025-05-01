@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload                       # NEW
@@ -90,6 +91,11 @@ async def list_user_doorbells(db: AsyncSession, user_id: int):
         enriched_doorbells.append(doorbell)
 
     return enriched_doorbells
+
+async def get_doorbell_by_id(db: AsyncSession, doorbell_id: int):
+    stmt = select(models.Doorbell).where(models.Doorbell.doorbell_id == doorbell_id)
+    result = await db.execute(stmt)
+    return result.scalars().first()
 
 # ---------- permission maths ----------
 async def _role_permission_ids(db: AsyncSession, role_id: int) -> Set[int]:
@@ -188,3 +194,33 @@ async def set_face_blocked(db: AsyncSession, *, face_id: int, blocked: bool):
     await db.commit()
     return fp
 
+#------ Notification Helpers -----
+async def get_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, user_id: int):
+    stmt = select(models.NotifTokens).where(models.NotifTokens.fcm_token == fcm_token, 
+                                            models.NotifTokens.doorbell_id == doorbell_id, 
+                                            models.NotifTokens.user_id == user_id)
+    result = await db.execute(stmt)
+    return result.scalars().first()
+
+async def create_fcm_token(db: AsyncSession, fcm_token: str, user_id: str, doorbell_id: str):
+    token = models.NotifTokens(
+        fcm_token = fcm_token,
+        user_id = user_id,
+        doorbell_id = doorbell_id
+    )
+
+    db.add(token)
+    await db.commit()
+    return token
+
+async def delete_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, user_id: int):
+    token = await get_fcm_token(db, fcm_token, doorbell_id, user_id)
+
+    if not token:
+        raise HTTPException(400, "Token linked to user and doorbell not found")
+    
+    await db.delete(token)
+    await db.commit()
+    return {"message": "Token deleted"}
+
+    

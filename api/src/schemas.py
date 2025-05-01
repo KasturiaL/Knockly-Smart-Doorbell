@@ -68,6 +68,10 @@ class UserDoorbellLinkCreate(BaseModel):
     doorbell_id: int
     role_id: Optional[int] = None
 
+class DoorbellTokenAdd(BaseModel):
+    token: str
+    doorbell_id: int
+
 class PermCheckResponse(BaseModel):
     permission: str
     granted: bool
@@ -85,3 +89,11 @@ class FaceProfileOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class NotificationSubscribe(BaseModel):
+    fcm_token: str
+    doorbell_id: int
+
+class NotificationUnsubscribe(BaseModel):
+    fcm_token: str
+    doorbell_id: int
