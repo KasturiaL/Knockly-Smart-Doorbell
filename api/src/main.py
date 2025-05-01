@@ -76,6 +76,7 @@ async def send_fcm_notification(fcm_token: str, title: str, body: str):
     async with AsyncClient() as client:
         response = await client.post(FIRBEASE_URL, json=message, headers=headers)
         response.raise_for_status()
+        print("Fcm Response: ", response.status_code, response.text)
         return response.json()
 
 # -------- AUTH ------------------------------------------------
