@@ -232,6 +232,22 @@ async def block_face(face_id: int, block: bool = True,
     return {"face_id": face_id, "is_blocked": fp.is_blocked}
 
 # ---------NOTIFICATIONS ---------------
+@app.post("/notifications/isSubscribed", response_model=schemas.NotificationIsSubscribedResponse)
+async def checkSubscribed(
+    body: schemas.NotificationIsSubscribed,
+    db: AsyncSession = Depends(database.get_session),
+    me: models.User = Depends(current_user)):
+
+    token = await crud.get_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
+
+    if token:
+        response = {"isSubscribed": True}
+    else:
+        response = {"isSubscribed": False}
+    
+    return response
+
+
 @app.post("/notifications/subscribe", status_code=201)
 async def subscribeUser(
     body: schemas.NotificationSubscribe, 

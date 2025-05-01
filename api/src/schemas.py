@@ -87,6 +87,13 @@ class FaceProfileOut(BaseModel):
         orm_mode = True
 
 # _____________ Notifications _____________
+class NotificationIsSubscribed(BaseModel):
+    fcm_token: str
+    doorbell_id: int
+
+class NotificationIsSubscribedResponse(BaseModel):
+    isSubscribed: bool
+
 class NotificationSubscribe(BaseModel):
     fcm_token: str
     doorbell_id: int
