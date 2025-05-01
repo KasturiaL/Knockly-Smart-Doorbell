@@ -1,4 +1,4 @@
-package com.example.knockly;
+package com.example.knockly.manageFacesPage;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.knockly.R;
 import com.example.knockly.network.dto.FaceResponse;
 import com.example.knockly.utils.ViewUtils;
 

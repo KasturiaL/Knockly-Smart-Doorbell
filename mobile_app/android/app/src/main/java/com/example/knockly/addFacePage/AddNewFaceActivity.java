@@ -132,7 +132,6 @@ public class AddNewFaceActivity extends AppCompatActivity {
 
         savedVideoFile = new File(dir, name + ".mp4"); // create a file for the new video
 
-        // Android requires FileProvider to safely share file URIs with other apps (like camera)
         Uri videoUri = FileProvider.getUriForFile(
                 this,
                 getPackageName() + ".provider", // must match the provider set in manifest
@@ -176,8 +175,8 @@ public class AddNewFaceActivity extends AppCompatActivity {
 
                 if (!login) throw new Exception("FTP login failed.");
 
-                ftp.enterLocalActiveMode(); // passive mode is usually safer for mobile uploads
-                ftp.setFileType(FTP.BINARY_FILE_TYPE); // binary = raw file mode, good for video
+                ftp.enterLocalActiveMode();
+                ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
                 // upload the actual file
                 FileInputStream fis = new FileInputStream(savedVideoFile);
@@ -202,7 +201,7 @@ public class AddNewFaceActivity extends AppCompatActivity {
                         Toast.makeText(AddNewFaceActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show()
                 );
             }
-        }).start(); // don’t forget to start the thread!
+        }).start();
     }
 
     private boolean validateVideo(File videoFile) {

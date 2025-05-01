@@ -12,7 +12,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.knockly.LinkedFacesFragment;
 import com.example.knockly.R;
 import com.example.knockly.addFacePage.AddNewFaceActivity;
 import com.example.knockly.blocklistPage.BlocklistActivity;
