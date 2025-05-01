@@ -1,6 +1,8 @@
 package com.example.knockly;
 
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -16,6 +18,15 @@ public class KnocklyApp extends Application {
         super.onCreate();
         LoginManager lm = LoginManager.getInstance(this);
         AuthRepository.getInstance(lm);
+
+        // Create notification channel to send push notifications
+        NotificationChannel channel = new NotificationChannel(
+                "default_channel",
+                "Default Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+        );
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        manager.createNotificationChannel(channel);
 
         // Turn off dark mode while not tested
         // Delete line to allow dark mode

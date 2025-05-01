@@ -1,14 +1,17 @@
 package com.example.knockly;
 
+import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
+import com.example.knockly.utils.PermissionUtils;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-
-// Code adapted from Geeks for Geeks. 2025. How to Push Notification in Android using Firebase Cloud Messaging?
-// Available at https://www.geeksforgeeks.org/how-to-push-notification-in-android-using-firebase-cloud-messaging/
 
 public class FirebaseMessageReceiver extends FirebaseMessagingService {
 
@@ -25,16 +28,30 @@ public class FirebaseMessageReceiver extends FirebaseMessagingService {
     @Override
     public void
     onMessageReceived(RemoteMessage remoteMessage) {
-        // First case when notifications are received via
-        // data event
-        // Here, 'title' and 'message' are the assumed names
-        // of JSON
-        // attributes. Since here we do not have any data
-        // payload, This section is commented out. It is
-        // here only for reference purposes.
-        if(remoteMessage.getData().size()>0){
-            String title = remoteMessage.getData().get("title");
-            String message = remoteMessage.getData().get("message");
+
+        if(remoteMessage.getNotification() != null){
+            // Send notification even if app is open
+           sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody());
+        }
+
+        if(remoteMessage.getData().size() > 0){
+            sendNotification(remoteMessage.getNotification().getTitle(), remoteMessage.getNotification().getBody());
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void sendNotification(String title, String body){
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "default_channel")
+                .setContentTitle(title)
+                .setContentText(body)
+                .setSmallIcon(R.drawable.notification_icon)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setAutoCancel(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (PermissionUtils.hasNotifPerms(getApplicationContext())) {
+            notificationManager.notify(0, notificationBuilder.build());
         }
     }
 }

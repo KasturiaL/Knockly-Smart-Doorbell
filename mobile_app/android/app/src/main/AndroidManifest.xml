@@ -42,6 +42,8 @@
         android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:name=".KnocklyApp"
         android:allowBackup="true"

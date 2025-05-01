@@ -1,6 +1,8 @@
 package com.example.knockly.manageDoorbellPage;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
@@ -8,7 +10,10 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,6 +25,7 @@ import com.example.knockly.network.dto.IsSubscribedResponse;
 import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
+import com.example.knockly.utils.PermissionUtils;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import retrofit2.Call;
@@ -29,6 +35,7 @@ import retrofit2.Response;
 public class ManageDoorbellActivity extends AppCompatActivity {
     private AuthRepository repo = AuthRepository.getInstance(LoginManager.getInstance(this));
     private String fcmToken;
+    ToggleButton getNotifsButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +57,7 @@ public class ManageDoorbellActivity extends AppCompatActivity {
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance(doorbellName + " Settings", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageDoorbellHeaderFragment, pageHeader).commit();
 
-        ToggleButton getNotifsButton = findViewById(R.id.ReceiveNotifsButton);
+        getNotifsButton = findViewById(R.id.ReceiveNotifsButton);
 
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             // Once fcm token received
@@ -82,6 +89,10 @@ public class ManageDoorbellActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if (isChecked) {
+                    if (!PermissionUtils.hasNotifPerms(ManageDoorbellActivity.this)){
+                        Log.d("ManageDoorbellActivity", "Getting notification permissions");
+                        PermissionUtils.getNotifPerms(ManageDoorbellActivity.this);
+                    }
                     repo.subscribe(fcmToken, doorbellId).enqueue(new Callback<Void>() {
                         @Override
                         public void onResponse(Call<Void> call, Response<Void> response) {
@@ -121,6 +132,18 @@ public class ManageDoorbellActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100){
+            if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(ManageDoorbellActivity.this, "Notification permissions not granted. Please enable in settings to turn this feature on", Toast.LENGTH_SHORT).show();
+                getNotifsButton.setChecked(false);
+            }
+        }
     }
 }
 
