@@ -4,7 +4,7 @@ from jose import jwt
 import pyotp
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request                                      
-from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXP_MINUTES
+from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXP_MINUTES, FIREBASE_KEY_LOCATION
 
 _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -31,7 +31,7 @@ def verify_totp(secret: str, code: str) -> bool:
 #------ FCM Server Token helpers -----
 def get_fcm_access_token():
     credentials = service_account.Credentials.from_service_account_file(
-        "config/service_account.json",
+        FIREBASE_KEY_LOCATION,
         scopes=["https://www.googleapis/com/auth/firebase.messaging"]
     )
     credentials.refresh(Request())
