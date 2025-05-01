@@ -88,13 +88,16 @@ def rotate_image(img, angle):
 
 
 def find_faces_multi_orientation(img_rgb):
-    """Try 0°,90°,180°,270° – return first (locs, encs) tuple that contains faces."""
+    """Return encodings for the first rotation (0/90/180/270) that yields faces.
+    Frames are wrapped with np.ascontiguousarray() to guarantee +stride
+    memory, avoiding dlib’s malloc/free mismatch.
+    """
     for angle in (0, 90, 180, 270):
-        rgb = rotate_image(img_rgb, angle) if angle else img_rgb
-        locs = face_recognition.face_locations(rgb)
+        test = rotate_image(img_rgb, angle) if angle else img_rgb
+        test = np.ascontiguousarray(test)   # 💥 critical fix
+        locs = face_recognition.face_locations(test)
         if locs:
-            encs = face_recognition.face_encodings(rgb, locs)
-            return encs
+            return face_recognition.face_encodings(test, locs)
     return []
 
 # ------------------------- Arduino Logging Thread -------------------------
@@ -188,8 +191,7 @@ def extract_encodings_from_video(video_path, doorbell_id):
         for enc in encs:
             store_face_encoding(doorbell_id, name, enc)
             saved += 1
-        if saved >= 20:
-            break
+        if saved >= 20: break
     cap.release()
     log(f"[INFO] Stored {saved} encodings for {name}")
 
@@ -269,4 +271,3 @@ if __name__ == "__main__":
         log("[INFO] KeyboardInterrupt – shutting down.")
     finally:
         cam.stop(); cv2.destroyAllWindows(); log("[INFO] Clean shutdown complete.")
-
