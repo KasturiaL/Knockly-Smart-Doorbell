@@ -274,3 +274,13 @@ async def unsubscribeUser(
     await crud.delete_fcm_token(db, body.fcm_token, body.doorbell_id, me.user_id)
 
     return {"message": "Unsubscribed successfully"}
+
+@app.post("/notifications/notify/motionDetected")
+async def notifyMotionDetected(body: schemas.NotifyMotionDetected, db:AsyncSession):
+    # Find doorbell from token given
+    doorbell_id = await crud.get_doorbell_by_token(db, body.token)
+
+    if not doorbell_id:
+        raise HTTPException(400, "Doorbell token invalid, doorbell not found")
+    
+    print(doorbell_id)

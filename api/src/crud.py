@@ -97,6 +97,11 @@ async def get_doorbell_by_id(db: AsyncSession, doorbell_id: int):
     result = await db.execute(stmt)
     return result.scalars().first()
 
+async def get_doorbell_by_token(db:AsyncSession, token: str):
+    stmt = select(models.DoorbellTokens.doorbell_id).where(models.DoorbellTokens.token == token)
+    result = await db.execute(stmt)
+    return result.scalars().first()
+
 # ---------- permission maths ----------
 async def _role_permission_ids(db: AsyncSession, role_id: int) -> Set[int]:
     q = select(models.roles_permissions).where(
@@ -201,6 +206,11 @@ async def get_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, user
                                             models.NotifTokens.user_id == user_id)
     result = await db.execute(stmt)
     return result.scalars().first()
+
+async def get_fcm_tokens_by_doorbell(db: AsyncSession, doorbell_id: int):
+    stmt = select(models.NotifTokens.fcm_token).where(models.NotifTokens.doorbell_id == doorbell_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 async def create_fcm_token(db: AsyncSession, fcm_token: str, user_id: int, doorbell_id: int):
     token = models.NotifTokens(
