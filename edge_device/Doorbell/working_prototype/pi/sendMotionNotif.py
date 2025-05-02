@@ -1,7 +1,7 @@
 import requests
 import os
 
-base_url = "https://d8fa-82-9-107-138.ngrok-free.app"
+base_url = "https://e415-82-9-107-138.ngrok-free.app"
 endpoint = "/notifications/notify/motionDetected"
 
 tokenLocation = "/home/admin/.doorbell_id_token.txt"
