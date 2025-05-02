@@ -42,6 +42,7 @@ class UserSettingsOut(BaseModel):
 class LinkedUserOut(BaseModel):
     user_id: int
     username: str
+    display_name: str
     role_id: Optional[int] = None
     role_name: Optional[str] = None
 
@@ -63,6 +64,9 @@ class DoorbellCreate(BaseModel):
     enable_facial_recognition: bool = False
     auto_delete_recordings: bool = False
 
+# class DoorbellGetUsers(BaseModel):
+#     doorbell_id: int
+    
 class UserDoorbellLinkCreate(BaseModel):
     user_id: int
     doorbell_id: int

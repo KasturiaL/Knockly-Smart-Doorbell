@@ -209,6 +209,17 @@ async def link_user(body: schemas.UserDoorbellLinkCreate,
     await db.commit()
     return {"detail": "User linked to doorbell"}
 
+@app.get("/doorbells/{doorbell_id}/getLinkedUsers", response_model=list[schemas.LinkedUserOut])
+async def get_doorbell_users(
+    doorbell_id: int,
+    me: models.User = Depends(current_user),
+    db: AsyncSession = Depends(database.get_session)):
+
+    linked_users = await crud.get_users_from_doorbell(db, doorbell_id)
+
+    return linked_users
+
+
 # ---------- PERMISSIONS (read + override) ------------------- 
 @app.get("/doorbells/{doorbell_id}/permissions",
          response_model=list[schemas.PermCheckResponse])

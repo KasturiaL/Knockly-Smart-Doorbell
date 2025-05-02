@@ -102,6 +102,23 @@ async def get_doorbell_by_token(db:AsyncSession, token: str):
     result = await db.execute(stmt)
     return result.scalars().first()
 
+async def get_users_from_doorbell(db: AsyncSession, doorbell_id: int):
+    stmt = select(models.User, models.Role).select_from(models.user_doorbell).join(models.User, models.user_doorbell.c.user_id == models.User.user_id).outerjoin(models.Role, models.user_doorbell.c.role_id == models.Role.role_id).where(models.user_doorbell.c.doorbell_id == doorbell_id)
+    results = await db.execute(stmt)
+    
+    linked_users = [
+        schemas.LinkedUserOut(
+            user_id = user.user_id,
+            username = user.username,
+            display_name = user.display_name,
+            role_id = role.role_id if role else None,
+            role_name = role.role_name if role else None
+        )
+        for user, role in results.all()
+    ]
+
+    return linked_users
+
 # ---------- permission maths ----------
 async def _role_permission_ids(db: AsyncSession, role_id: int) -> Set[int]:
     q = select(models.roles_permissions).where(
