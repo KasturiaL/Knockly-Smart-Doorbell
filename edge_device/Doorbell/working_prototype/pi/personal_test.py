@@ -1,5 +1,6 @@
 # ------------------------- Imports -------------------------
 import os, cv2, pickle, shutil, threading, time, datetime, serial, mysql.connector
+import serial.tools.list_ports
 import face_recognition
 import numpy as np
 from pathlib import Path
@@ -9,8 +10,15 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 # ------------------------- Configuration -------------------------
-pc_port = "COM9"
-pi_port = "/dev/ttyACM0"
+def find_arduino_port():
+	ports = serial.tools.list_ports.comports()
+	for port in ports:
+		if ("Arduino" in port.description or "ttyACM" in port.device or "ttyUSB" in port.device):
+			return port.device
+			
+	return None
+    
+pi_port = find_arduino_port()
 baud_rate = 9600
 timeout_s = 0.1
 
@@ -48,7 +56,7 @@ def has_been_processed(path: Path) -> bool:            #
     return (processed_dir / path.name).exists()        # 
 
 # ------------------------- Hardware Setup -------------------------
-arduino = serial.Serial(pc_port, baudrate=baud_rate, timeout=timeout_s)
+arduino = serial.Serial(pi_port, baudrate=baud_rate, timeout=timeout_s)
 
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"format": "XRGB8888", "size": (640, 480)}))
@@ -317,8 +325,10 @@ def setup():
     send_command("0")
 
     time.sleep(2)
+    
+    port = find_arduino_port()
 
-    arduino = serial.Serial(pc_port, baudrate=baud_rate, timeout=timeout_s)
+    arduino = serial.Serial(port, baudrate=baud_rate, timeout=timeout_s)
 
     print("Listening for log messages...")
 
