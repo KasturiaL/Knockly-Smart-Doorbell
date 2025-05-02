@@ -11,8 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
@@ -45,6 +47,7 @@ public class LiveFeedFragment extends Fragment {
     private static final String ARG_DOORBELL_ID = "000000";
 
     private String mDoorbellID;
+    private final long initialTime = System.currentTimeMillis() - 3000;
     private boolean liveFeedExpanded = false;
     private FragmentCallback callback;
     private final DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
@@ -101,7 +104,7 @@ public class LiveFeedFragment extends Fragment {
 
     // Send activity functions to interface
     @Override
-    public void onAttach(Context context){
+    public void onAttach(@NonNull Context context){
         super.onAttach(context);
 
         try{
@@ -134,17 +137,27 @@ public class LiveFeedFragment extends Fragment {
         playerView = view.findViewById(R.id.playerView);
         playerView2 = view.findViewById(R.id.playerView2);
         editTextDate = view.findViewById(R.id.editTextDate);
+        TextView noInputText = view.findViewById(R.id.noInputText);
+        TextView liveText = view.findViewById(R.id.textView);
 
-        long initialTime = System.currentTimeMillis() - 3000;
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z", Locale.getDefault());
         editTextDate.setText(sdf.format(new Date(initialTime)));
 
         if (!hostPi.isBlank()) {
+            noInputText.setVisibility(View.GONE);  // Hide the message
+            playerView.setVisibility(View.VISIBLE);
+            playerView2.setVisibility(View.INVISIBLE);
+            liveText.setVisibility(View.VISIBLE);
             String rtspUri = "rtsp://" + hostPi + ":8554/doorbell";
 
             initializePlayer(rtspUri);
             timestampHandler.post(updateTimestampRunnable);
             scheduleReconnect(rtspUri);
+        } else {
+            noInputText.setVisibility(View.VISIBLE);  // Show the message
+            playerView.setVisibility(View.GONE);
+            playerView2.setVisibility(View.GONE);
+            liveText.setVisibility(View.GONE);
         }
 
         ImageButton changeViewButton = view.findViewById(R.id.changeViewButton);
@@ -275,9 +288,8 @@ public class LiveFeedFragment extends Fragment {
 
     private void updateEditTextDate() {
         if (exoPlayer != null && exoPlayer.isPlaying()) {
-            long currentTimeMs = exoPlayer.getCurrentPosition();
-            long currentSystemTime = System.currentTimeMillis() - exoPlayer.getDuration() + currentTimeMs;
-
+            long offset = 3000;
+            long currentSystemTime = System.currentTimeMillis() - offset;
             SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z", Locale.getDefault());
             String formattedTime = sdf.format(currentSystemTime);
 
