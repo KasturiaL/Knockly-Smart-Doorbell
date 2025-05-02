@@ -8,6 +8,7 @@ import com.example.knockly.network.dto.NotifSubscriptionRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
 import com.example.knockly.network.dto.UpdateFCMTokenOut;
+import com.example.knockly.network.dto.UserCreate;
 import com.example.knockly.network.dto.UserInfo;
 
 import retrofit2.Call;
@@ -22,7 +23,7 @@ public interface AuthService {
     Call<Token> login(@Body LoginRequest body);
 
     @POST("auth/register")
-    Call<Token> register(@Body LoginRequest body);
+    Call<Token> register(@Body UserCreate body);
 
     @GET("users/me")
     Call<UserInfo> getCurrentUser();

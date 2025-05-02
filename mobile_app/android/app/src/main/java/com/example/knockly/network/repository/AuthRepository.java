@@ -10,6 +10,7 @@ import com.example.knockly.network.dto.NotifSubscriptionRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
 import com.example.knockly.network.dto.UpdateFCMTokenOut;
+import com.example.knockly.network.dto.UserCreate;
 import com.example.knockly.network.dto.UserInfo;
 import com.example.knockly.network.service.AuthService;
 
@@ -45,8 +46,8 @@ public class AuthRepository {
         return svc.login(new LoginRequest(user, pass));
     }
 
-    public Call<Token> register(String user, String pass) {
-        return svc.register(new LoginRequest(user, pass));
+    public Call<Token> register(String user, String email, String pass, String displayName) {
+        return svc.register(new UserCreate(user, email, pass, displayName));
     }
 
     public Call<UserInfo> getCurrentUser() {
