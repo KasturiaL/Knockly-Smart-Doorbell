@@ -102,5 +102,9 @@ class NotificationUnsubscribe(BaseModel):
     fcm_token: str
     doorbell_id: int
 
+class NotificationUpdateToken(BaseModel):
+    old_token: str
+    new_token: str
+
 class NotifyMotionDetected(BaseModel):
     token: str

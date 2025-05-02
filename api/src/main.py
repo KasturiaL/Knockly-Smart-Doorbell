@@ -257,7 +257,7 @@ async def block_face(face_id: int, block: bool = True,
 
 # ---------NOTIFICATIONS ---------------
 @app.post("/notifications/isSubscribed", response_model=schemas.NotificationIsSubscribedResponse)
-async def checkSubscribed(
+async def check_subscribed(
     body: schemas.NotificationIsSubscribed,
     db: AsyncSession = Depends(database.get_session),
     me: models.User = Depends(current_user)):
@@ -273,7 +273,7 @@ async def checkSubscribed(
 
 
 @app.post("/notifications/subscribe", status_code=201)
-async def subscribeUser(
+async def subscribe_user(
     body: schemas.NotificationSubscribe, 
     db: AsyncSession = Depends(database.get_session), 
     me: models.User = Depends(current_user)):
@@ -296,7 +296,7 @@ async def subscribeUser(
     return {"message": "Subscription successful"}
     
 @app.post("/notifications/unsubscribe")
-async def unsubscribeUser(
+async def unsubscribe_user(
     body: schemas.NotificationUnsubscribe,
     db: AsyncSession = Depends(database.get_session),
     me: models.User = Depends(current_user)):
@@ -315,8 +315,29 @@ async def unsubscribeUser(
 
     return {"message": "Unsubscribed successfully"}
 
+@app.post("/notifications/updateFCMToken")
+async def update_FCM_token(body: schemas.NotificationUpdateToken, db: AsyncClient = Depends(database.get_session), me: models.User = Depends(current_user)):
+    old_token = body.old_token
+    new_token = body.new_token
+
+    if old_token == new_token:
+        return {"message": "Token hasn't changed, no update necessary"}
+
+    doorbells = await crud.get_doorbells_by_fcm_token(db, old_token)
+
+    for doorbell in doorbells:
+        # Remove old notification token
+        await crud.delete_fcm_token(db, old_token, doorbell, me.user_id)
+
+        # Replace with new token
+        await crud.create_fcm_token(db, new_token, me.user_id, doorbell)
+    
+    return {"message": "FCM token updated successfully"}
+
+
+
 @app.post("/notifications/notify/motionDetected")
-async def notifyMotionDetected(body: schemas.NotifyMotionDetected, db:AsyncSession = Depends(database.get_session)):
+async def notify_motion_detected(body: schemas.NotifyMotionDetected, db:AsyncSession = Depends(database.get_session)):
     # Find doorbell from token given
     doorbell_id = await crud.get_doorbell_by_token(db, body.token)
 

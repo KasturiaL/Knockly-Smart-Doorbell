@@ -234,4 +234,10 @@ async def delete_fcm_token(db: AsyncSession, fcm_token: str, doorbell_id: int, u
     await db.commit()
     return {"message": "Token deleted"}
 
+async def get_doorbells_by_fcm_token(db: AsyncSession, fcm_token: str):
+    stmt = select(models.NotifTokens.doorbell_id).where(models.NotifTokens.fcm_token == fcm_token)
+    doorbells = await db.execute(stmt)
+
+    return doorbells.scalars()
+
     
