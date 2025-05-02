@@ -113,33 +113,60 @@ public class SSHUtils {
         int localHost = SSHUtils.getLocalHost(context);
         String subnet = SSHUtils.getSubnetIP(localHost);
         List<String> hosts = SSHUtils.ping(subnet);
+        System.out.println("Hosts: " + hosts);
 
-        for(String ip:hosts) {
-            try {
+        final ExecutorService es = Executors.newFixedThreadPool(32);
+        List<Future<String>> futures = new ArrayList<>();
+
+        for (String ip : hosts) {
+            futures.add(es.submit(() -> {
                 Session session = startSSH(username, ip, password);
-                session.disconnect();
-                return ip;
-            } catch (JSchException e) {
-                e.printStackTrace();
-            }
+                assert session != null;
+                if (session.isConnected()) {
+                    session.disconnect();  // Clean up
+                    Log.d(TAG, "getPiIP() :: SSH successful on " + ip);
+                    return ip;
+                }
+                return null;
+            }));
         }
-        return "";
+
+        try {
+            for (Future<String> future : futures) {
+                try {
+                    String result = future.get((long) 1.5, java.util.concurrent.TimeUnit.SECONDS);  // Wait for each task
+                    if (result != null) {
+                        es.shutdownNow();  // Stop remaining tasks
+                        return result;
+                    }
+                } catch (Exception ignored) {}
+            }
+        } finally {
+            es.shutdownNow();  // Ensure executor is closed
+        }
+
+        return "";  // No valid SSH connection
     }
 
-    public static Session startSSH(String username, String host, String password) throws JSchException {
-        JSch jsch = new JSch();
-        Session session = jsch.getSession(username, host, 22);
-        session.setPassword(password);
+    public static Session startSSH(String username, String host, String password) {
+        try{
+            JSch jsch = new JSch();
+            Session session = jsch.getSession(username, host, 22);
+            session.setPassword(password);
 
-        Properties prop = new Properties();
-        prop.put("StrictHostKeyChecking", "no");
-        session.setConfig(prop);
+            Properties prop = new Properties();
+            prop.put("StrictHostKeyChecking", "no");
+            session.setConfig(prop);
 
-        session.connect();
+            session.connect();
 
-        System.out.println("SSH session to "+username+" established");
+            System.out.println("SSH session to "+username+" established");
 
-        return session;
+            return session;
+        } catch (JSchException e) {
+            e.getMessage();
+            return null;
+        }
     }
 
     public static int execSSHCmd(String cmd, Session session) {
@@ -175,6 +202,13 @@ public class SSHUtils {
         } catch (JSchException | IOException e) {
             System.out.println(e.getMessage());
             return -1;
+        }
+    }
+
+    public static void stopSSH(Session sshSession) {
+        if (sshSession != null && sshSession.isConnected()) {
+            sshSession.disconnect();
+            System.out.println("SSH session disconnected.");
         }
     }
 
