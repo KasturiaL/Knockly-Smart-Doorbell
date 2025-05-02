@@ -1,25 +1,18 @@
-# GUI now runs on the main thread. Prior issue was with GUI (opencv.imshow - GTK) running on a daemon thread, causing the seg-fault.
-# Added orientation‑handling helpers (for rotation) back in order to standardize video across phone and face_rec library.
-# Possibly fixed dlib threading issues by using a lock around all dlib calls.
-# Added "is_file_complete" helper so that we never process a video whilst still being uploaded through FTP (race-condition fix).
-# Also wrapped all thread bodies in try/except to catch any errors and log them.
-
 # ------------------------- Imports -------------------------
 import os, cv2, pickle, shutil, threading, time, datetime, serial, mysql.connector
 import face_recognition
 import numpy as np
 from pathlib import Path
+from picamera2 import Picamera2
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers    import FTPHandler
-from pyftpdlib.servers     import FTPServer
-
-os.environ["FACE_RECOGNITION_MODEL_LOCATION"] = r"c:\Users\potat\Desktop\project\self_test\.venv\Lib\site-packages\face_recognition_models\__init__.py"
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
 
 # ------------------------- Configuration -------------------------
 pc_port = "COM9"
-pi_port            = "/dev/ttyACM0"
-baud_rate          = 9600
-timeout_s          = 0.1
+pi_port = "/dev/ttyACM0"
+baud_rate = 9600
+timeout_s = 0.1
 
 FTP_USER           = "pi"
 FTP_PASSWORD       = "raspberry"
@@ -28,24 +21,23 @@ PROCESSED_DIR      = "processed_videos"
 COMMAND_FILE       = "command.txt"
 
 DB_CONFIG = {
-    "host":     "localhost",
-    "user":     "door_user",
+    "host": "localhost",
+    "user": "door_user",
     "password": "door_user_door_user",
     "database": "smart_door_db",
-    "port": 3306
 }
 
-DOORBELL_ID           = 1
-MIN_VIDEO_DURATION    = 15     # seconds
-BRIGHTNESS_THRESHOLD  = 32     # mean gray value 0–255
-OPEN_DOOR_COOLDOWN    = 5      # seconds between re‑opening
+DOORBELL_ID = 1
+MIN_VIDEO_DURATION = 15     # seconds
+BRIGHTNESS_THRESHOLD = 32     # mean gray value 0–255
+OPEN_DOOR_COOLDOWN = 5      # seconds between re‑opening
 
 # ------------------------- Paths & Files -------------------------
-base_dir       = Path(__file__).parent
-log_file       = base_dir / "log.txt"
-ftp_dir        = base_dir / FTP_DIR
-processed_dir  = base_dir / PROCESSED_DIR
-command_file   = base_dir / COMMAND_FILE
+base_dir = Path(__file__).parent
+log_file = base_dir / "log.txt"
+ftp_dir = base_dir / FTP_DIR
+processed_dir = base_dir / PROCESSED_DIR
+command_file = base_dir / COMMAND_FILE
 
 ftp_dir.mkdir(exist_ok=True)
 processed_dir.mkdir(exist_ok=True)
@@ -58,10 +50,9 @@ def has_been_processed(path: Path) -> bool:            #
 # ------------------------- Hardware Setup -------------------------
 arduino = serial.Serial(pc_port, baudrate=baud_rate, timeout=timeout_s)
 
-cam = cv2.VideoCapture(0)
-
-cam.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cam = Picamera2()
+cam.configure(cam.create_video_configuration(main={"format": "XRGB8888", "size": (640, 480)}))
+cam.start()
 
 # ------------------------- Global Locks -------------------------
 DLIB_LOCK = threading.Lock()  # All dlib calls are now single‑threaded
@@ -137,11 +128,9 @@ def dlib_face_locations(img):
     with DLIB_LOCK:
         return face_recognition.face_locations(img)
 
-
 def dlib_face_encodings(img, locs=None):
     with DLIB_LOCK:
         return face_recognition.face_encodings(img, locs)
-
 
 # ------------------------- Orientation Helpers -------------------------
 ROTATE_CODE = {
@@ -154,7 +143,6 @@ ROTATE_CODE = {
 def rotate_image(img, angle):
     code = ROTATE_CODE[angle]
     return img if code is None else cv2.rotate(img, code)
-
 
 def find_faces_multi_orientation(img_rgb):
     """Return encodings for the first rotation (0/90/180/270) that yields faces."""
@@ -278,9 +266,7 @@ def run_live_recognition():
     last_open_time = 0.0
 
     while True:
-        ret, frame = cam.read()
-        if not ret:
-            log("[ERROR] Failed to grab frame from webcam."); continue
+        frame = cam.capture_array().copy()
         small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
         rgb   = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
         rgb   = np.ascontiguousarray(rgb)
@@ -327,7 +313,7 @@ def start_ftp_server():
 
 def setup():
     global arduino
-    
+
     send_command("0")
 
     time.sleep(2)
@@ -348,7 +334,7 @@ def main():
     except KeyboardInterrupt:
         log("[INFO] KeyboardInterrupt – shutting down …")
     finally:
-        cam.release(); cv2.destroyAllWindows(); log("[INFO] Clean shutdown complete.")
+        cam.stop(); cv2.destroyAllWindows(); log("[INFO] Clean shutdown complete.")
 
 
 if __name__ == "__main__":
