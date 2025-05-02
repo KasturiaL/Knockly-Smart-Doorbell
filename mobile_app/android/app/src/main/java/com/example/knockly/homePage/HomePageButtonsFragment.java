@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -17,8 +19,11 @@ import com.example.knockly.indvDoorbellPage.IndvDoorbellActivity;
 import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.utils.ButtonUtils;
+import com.example.knockly.utils.SSHUtils;
 import com.example.knockly.utils.ViewUtils;
 import com.google.android.material.button.MaterialButton;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 
 /**
  * A {@link Fragment} subclass that takes an array of json objects representing
@@ -33,6 +38,14 @@ public class HomePageButtonsFragment extends Fragment {
     private static final String ARG_DOORBELLS = "doorbells";
 
     private DoorbellOut[] mDoorbells;
+    private Context context;
+    private String piHost = "";
+    private final String username = "pi";
+    private final String password = "raspberry";
+    private Session sshSession;
+    private final String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    private final String serverCmd = "\nchmod +x startServer.sh\n./startServer.sh\n";
+    private int returnStatus;
 
     public HomePageButtonsFragment() {
         // Required empty public constructor
@@ -72,61 +85,39 @@ public class HomePageButtonsFragment extends Fragment {
         GridLayout layout = view.findViewById(R.id.HomePageScrollLayout);
         layout.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
 
-        // For each doorbell create button and add to display
-        DoorbellOut currentObject;
+        View loadingOverlay = view.findViewById(R.id.loading_overlay);
+        ProgressBar loadingBar = view.findViewById(R.id.loading_spinner);
+        TextView loadingText = view.findViewById(R.id.loading_text);
 
-        try {
-            // Calculate button dimensions based on screen size
-            int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
-            int marginSize = (int) (ViewUtils.dpToPx(8, getContext()));
-            int buttonWidth = (screenWidth / 2) - (4 * marginSize);
-            int buttonHeight = (int) (ViewUtils.dpToPx(100, getContext()));
-            for (int m = 0; m < mDoorbells.length; m++) {
-                currentObject = mDoorbells[m];
-                if (currentObject == null) {
-                    continue;
+        context = getContext();
+
+        final Thread networkThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (piHost.isBlank()) {
+                    piHost = SSHUtils.getPiIP(context, username, password);
+                    System.out.println(piHost);
                 }
-                String doorbellID = currentObject.doorbell_id;;
-                String doorbellName = currentObject.doorbell_name;
-                String ownerID = currentObject.owner_user_id;
-                LinkedUser[] linkedUsers = currentObject.linked_users;
 
-                // Create button for doorbell
-                MaterialButton doorbellButton = ButtonUtils.createDynamicStyledButton(getContext(), doorbellName, buttonWidth, buttonHeight, marginSize);
-
-                doorbellButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(getActivity(), IndvDoorbellActivity.class);
-                        intent.putExtra("doorbell_ID", doorbellID);
-                        intent.putExtra("doorbell_name", doorbellName);
-                        intent.putExtra("owner_id", ownerID);
-                        intent.putExtra("linked_users", linkedUsers);
-                        startActivity(intent);
-                    }
+                // After data fetched, update UI
+                requireActivity().runOnUiThread(() -> {
+                    // Hide loading overlay after buttons are set up
+                    loadingBar.setVisibility(View.GONE);
+                    loadingText.setVisibility(View.GONE);
+                    loadingOverlay.setVisibility(View.GONE);
+                    setupButtons(layout);
                 });
 
-                // Add to screen
-                layout.addView(doorbellButton);
-            }
+                startSession();
 
-            // Make and add 'Add Doorbell' button
-            MaterialButton addBellButton = createAddDoorbellButton(getContext(), buttonWidth, buttonHeight, marginSize);
-
-            addBellButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getActivity(), AddDoorbellActivity.class);
-                    startActivity(intent);
+                if (sshSession != null) {
+                    String command = "\ncd "+commandDir+"\n"+serverCmd+"\n";
+                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
                 }
-            });
+            }
+        });
+        networkThread.start();
 
-            layout.addView(addBellButton);
-        }
-        catch (Exception e){
-            System.out.println("Error creating buttons on home page");
-            System.out.println(e);
-        }
         return view;
     }
     private MaterialButton createAddDoorbellButton(Context context, int width, int height, int margins){
@@ -139,5 +130,75 @@ public class HomePageButtonsFragment extends Fragment {
         button.setIconSize((int) (ViewUtils.dpToPx(24, context)));
         button.setIconTint(null);
         return button;
+    }
+
+    private void setupButtons(GridLayout layout) {
+        requireActivity().runOnUiThread(() -> {
+            DoorbellOut currentObject;
+
+            try {
+                // Calculate button dimensions based on screen size
+                int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
+                int marginSize = (int) (ViewUtils.dpToPx(8, getContext()));
+                int buttonWidth = (screenWidth / 2) - (4 * marginSize);
+                int buttonHeight = (int) (ViewUtils.dpToPx(100, getContext()));
+                for (int m = 0; m < mDoorbells.length; m++) {
+                    currentObject = mDoorbells[m];
+                    if (currentObject == null) {
+                        continue;
+                    }
+                    String doorbellID = currentObject.doorbell_id;;
+                    String doorbellName = currentObject.doorbell_name;
+                    String ownerID = currentObject.owner_user_id;
+                    LinkedUser[] linkedUsers = currentObject.linked_users;
+
+                    // Create button for doorbell
+                    MaterialButton doorbellButton = ButtonUtils.createDynamicStyledButton(getContext(), doorbellName, buttonWidth, buttonHeight, marginSize);
+
+                    doorbellButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent(getActivity(), IndvDoorbellActivity.class);
+                            intent.putExtra("doorbell_ID", doorbellID);
+                            intent.putExtra("doorbell_name", doorbellName);
+                            intent.putExtra("owner_id", ownerID);
+                            intent.putExtra("linked_users", linkedUsers);
+                            intent.putExtra("piHost", piHost);
+                            startActivity(intent);
+                        }
+                    });
+
+                    // Add to screen
+                    layout.addView(doorbellButton);
+                }
+
+                // Make and add 'Add Doorbell' button
+                MaterialButton addBellButton = createAddDoorbellButton(getContext(), buttonWidth, buttonHeight, marginSize);
+
+                addBellButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(getActivity(), AddDoorbellActivity.class);
+                        startActivity(intent);
+                    }
+                });
+
+                layout.addView(addBellButton);
+            }
+            catch (Exception e){
+                System.out.println("Error creating buttons on home page");
+                System.out.println(e);
+            }
+        });
+    }
+
+    private void startSession() {
+        if (!piHost.isBlank()) {
+            try {
+                sshSession = SSHUtils.startSSH(username, piHost, password);
+            } catch (JSchException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 }

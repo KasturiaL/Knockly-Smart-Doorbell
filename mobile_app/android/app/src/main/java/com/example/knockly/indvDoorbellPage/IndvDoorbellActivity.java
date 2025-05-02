@@ -16,6 +16,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.media3.common.util.UnstableApi;
 
 import com.example.knockly.R;
 import com.example.knockly.network.dto.LinkedUser;
@@ -31,6 +32,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+@UnstableApi
 public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedFragment.FragmentCallback, DoorControlFragment.FragmentCallback {
 
     private AuthRepository repo = AuthRepository.getInstance(LoginManager.getInstance(this));
@@ -40,9 +42,9 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
     private Context context;
     private final String username = "pi";
     private final String password = "raspberry";
-    private String piHost = "";
+    public static String hostPi = "";
     private Session sshSession;
-    private String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    public String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
     private String openCmd = "\nchmod +x open.sh\n./open.sh\n";
     private String closeCmd = "\nchmod +x close.sh\n./close.sh\n";
 
@@ -59,12 +61,13 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
             return insets;
         });
 
-        // Get data about current doorbell from intent that started the activity
         Intent intent = getIntent();
+        // Get data about current doorbell from intent that started the activity
         String doorbellID = intent.getStringExtra("doorbell_ID");
         String doorbellName = intent.getStringExtra("doorbell_name");
         String ownerID = intent.getStringExtra("owner_id");
         LinkedUser[] linkedUsers = (LinkedUser[]) intent.getSerializableExtra("linked_users");
+        hostPi = intent.getStringExtra("piHost");
 
         // Get information about users current permissions from API
         repo.getUserPerms(doorbellID).enqueue(new Callback<PermissionResponse[]>() {
@@ -106,19 +109,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
 
         context = getApplicationContext();
 
-        if (piHost.isBlank()) {
-
-            final Thread networkThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    piHost = SSHUtils.getPiIP(context, username, password);
-                    System.out.println(piHost);
-
-                    startSession();
-                }
-            });
-            networkThread.start();
-        } else {
+        if (!hostPi.isBlank()) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -129,9 +120,9 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
     }
 
     private void startSession() {
-        if (!piHost.isBlank()) {
+        if (!hostPi.isBlank()) {
             try {
-                sshSession = SSHUtils.startSSH(username, piHost, password);
+                sshSession = SSHUtils.startSSH(username, hostPi, password);
             } catch (JSchException e) {
                 System.out.println(e.getMessage());
             }

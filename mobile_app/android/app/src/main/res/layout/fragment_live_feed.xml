@@ -14,8 +14,8 @@
     android:fitsSystemWindows="true"
     tools:context=".indvDoorbellPage.LiveFeedFragment">
 
-    <SurfaceView
-        android:id="@+id/feedView"
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fadingEdge="horizontal|vertical"
@@ -24,7 +24,24 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:resize_mode="fill"
+        app:use_controller="false" />
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fadingEdge="horizontal|vertical"
+        android:fitsSystemWindows="false"
+        android:visibility="invisible"
+        app:chainUseRtl="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:resize_mode="fill"
+        app:use_controller="false" />
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -34,7 +51,7 @@
         android:background="@color/white"
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/Base.Theme.Knockly"
-        app:layout_constraintBottom_toBottomOf="@+id/feedView"
+        app:layout_constraintBottom_toBottomOf="@+id/playerView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -60,9 +77,9 @@
         android:enabled="false"
         android:focusableInTouchMode="false"
         android:inputType="date"
-        android:text="Fri Oct 28 19:57:37 GMT"
+        android:text="Fri Oct 28 19:57:37 GMT+00"
         android:textAlignment="center"
-        android:textSize="16sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/toolbar"
         app:layout_constraintEnd_toStartOf="@+id/toggleButton"
         app:layout_constraintHorizontal_weight="2"

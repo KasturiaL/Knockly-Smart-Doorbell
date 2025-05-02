@@ -53,7 +53,14 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    /* ───── SSH ───── */
     implementation(libs.jsch)
+
+    /* ───── RTSP ───── */
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.exoplayer.rtsp)
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
