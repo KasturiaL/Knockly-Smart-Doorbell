@@ -356,10 +356,16 @@ async def notify_motion_detected(body: schemas.NotifyMotionDetected, db:AsyncSes
         raise HTTPException(400, "Doorbell token invalid, doorbell not found")
     
     tokens = await crud.get_fcm_tokens_by_doorbell(db, doorbell_id)
+    doorbell = await crud.get_doorbell_by_id(db, doorbell_id)
+
+    if not doorbell:
+        raise HTTPException(400, "Doorbell provided is invalid, cannot be attached to a doorbell record")
+    
+    doorbell_name = doorbell.doorbell_name
 
     for token in tokens:
         try:
-            await send_fcm_notification(token, "Motion detected", "There is someone at the door")
+            await send_fcm_notification(token, "Motion detected", f"{doorbell_name}: Someone has been detected at this doorbell")
         except Exception as err:
             print(f"Error sending notification to token {token}: {err}")
 
