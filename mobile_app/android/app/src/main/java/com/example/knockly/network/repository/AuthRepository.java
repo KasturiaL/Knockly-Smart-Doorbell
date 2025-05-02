@@ -9,6 +9,7 @@ import com.example.knockly.network.dto.LoginRequest;
 import com.example.knockly.network.dto.NotifSubscriptionRequest;
 import com.example.knockly.network.dto.PermissionResponse;
 import com.example.knockly.network.dto.Token;
+import com.example.knockly.network.dto.UpdateFCMTokenOut;
 import com.example.knockly.network.dto.UserInfo;
 import com.example.knockly.network.service.AuthService;
 
@@ -74,5 +75,9 @@ public class AuthRepository {
 
     public Call<Void> unsubscribe(String fcm_token, String doorbell_id){
         return svc.unsubscribe(new NotifSubscriptionRequest(fcm_token, doorbell_id));
+    }
+
+    public Call<Void> updateFCMToken(String old_token, String new_token){
+        return svc.updateFCMToken(new UpdateFCMTokenOut(old_token, new_token));
     }
 }
