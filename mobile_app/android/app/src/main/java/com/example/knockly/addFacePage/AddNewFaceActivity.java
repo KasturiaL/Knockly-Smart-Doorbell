@@ -32,6 +32,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.R;
 import com.example.knockly.shared.PageHeaderFragment;
+import com.example.knockly.utils.PermissionUtils;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -67,8 +68,8 @@ public class AddNewFaceActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().replace(R.id.AddFaceHeaderFragment, pageHeader).commit();
 
         // request camera and mic permissions (REALLY important or nothing works)
-        if  (!permissionsGranted()){
-            getPermissions();
+        if  (!PermissionUtils.hasCameraPerms(this)){
+            PermissionUtils.getCameraPerms(AddNewFaceActivity.this);
         }
 
         etName = findViewById(R.id.etName);
@@ -80,12 +81,12 @@ public class AddNewFaceActivity extends AppCompatActivity {
         // Make use first record button is visible (and other hidden)
         switchFromReRecordBtn();
 
-        if (permissionsGranted()){
+        if (PermissionUtils.hasCameraPerms(this)){
             disableRecordVidBtn("Please enter a name before recording the video", () ->{});
 
         }
         else {
-            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", this::getPermissions);
+            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", () -> PermissionUtils.getCameraPerms(AddNewFaceActivity.this));
         }
 
         disableSubmitVidBtn("Please enter name and record the video before trying to upload");
@@ -269,11 +270,11 @@ public class AddNewFaceActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (permissionsGranted()){
+        if (PermissionUtils.hasCameraPerms(this)){
             enableRecordVidBtn();
         }
         else{
-            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", this::getPermissions);
+            disableRecordVidBtn("Error: Permissions to record needed. Please grant this in settings", () -> PermissionUtils.getCameraPerms(AddNewFaceActivity.this));
         }
     }
 
@@ -362,25 +363,6 @@ public class AddNewFaceActivity extends AppCompatActivity {
 
         reRecordBtn.setVisibility(View.GONE);
         successMsg.setVisibility(View.GONE);
-    }
-
-    private boolean permissionsGranted(){
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-        return true;
-    }
-
-    private void getPermissions(){
-        Log.d("Add New Face Activity", "getPermissions: Getting permissions");
-        ActivityCompat.requestPermissions(this,
-                new String[]{
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.RECORD_AUDIO
-                }, 1);
     }
 
     private boolean hasGivenName(){
