@@ -9,9 +9,11 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.OptIn;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.gridlayout.widget.GridLayout;
+import androidx.media3.common.util.UnstableApi;
 
 import com.example.knockly.R;
 import com.example.knockly.addDoorbellPage.AddDoorbellActivity;
@@ -44,7 +46,7 @@ public class HomePageButtonsFragment extends Fragment {
     private final String password = "raspberry";
     private Session sshSession;
     private final String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
-    private final String serverCmd = "\nchmod +x startServer.sh\n./startServer.sh\n";
+    private final String serverCmd = "\nchmod +x startServer.sh\n./startServer.sh";
     private int returnStatus;
 
     public HomePageButtonsFragment() {
@@ -91,29 +93,26 @@ public class HomePageButtonsFragment extends Fragment {
 
         context = getContext();
 
-        final Thread networkThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (piHost.isBlank()) {
-                    piHost = SSHUtils.getPiIP(context, username, password);
-                    System.out.println(piHost);
-                }
+        final Thread networkThread = new Thread(() -> {
+            if (piHost.isBlank()) {
+                piHost = SSHUtils.getPiIP(context, username, password);
+                System.out.println(piHost);
+            }
 
-                // After data fetched, update UI
-                requireActivity().runOnUiThread(() -> {
-                    // Hide loading overlay after buttons are set up
-                    loadingBar.setVisibility(View.GONE);
-                    loadingText.setVisibility(View.GONE);
-                    loadingOverlay.setVisibility(View.GONE);
-                    setupButtons(layout);
-                });
+            // After data fetched, update UI
+            requireActivity().runOnUiThread(() -> {
+                // Hide loading overlay after buttons are set up
+                loadingBar.setVisibility(View.GONE);
+                loadingText.setVisibility(View.GONE);
+                loadingOverlay.setVisibility(View.GONE);
+                setupButtons(layout);
+            });
 
-                startSession();
+            startSession();
 
-                if (sshSession != null) {
-                    String command = "\ncd "+commandDir+"\n"+serverCmd+"\n";
-                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
-                }
+            if (sshSession != null) {
+                String command = "\ncd "+commandDir+"\n"+serverCmd;
+                returnStatus = SSHUtils.execSSHCmd(command, sshSession);
             }
         });
         networkThread.start();
@@ -156,6 +155,7 @@ public class HomePageButtonsFragment extends Fragment {
                     MaterialButton doorbellButton = ButtonUtils.createDynamicStyledButton(getContext(), doorbellName, buttonWidth, buttonHeight, marginSize);
 
                     doorbellButton.setOnClickListener(new View.OnClickListener() {
+                        @OptIn(markerClass = UnstableApi.class)
                         @Override
                         public void onClick(View view) {
                             Intent intent = new Intent(getActivity(), IndvDoorbellActivity.class);
@@ -194,11 +194,28 @@ public class HomePageButtonsFragment extends Fragment {
 
     private void startSession() {
         if (!piHost.isBlank()) {
-            try {
-                sshSession = SSHUtils.startSSH(username, piHost, password);
-            } catch (JSchException e) {
-                System.out.println(e.getMessage());
-            }
+            sshSession = SSHUtils.startSSH(username, piHost, password);
         }
+    }
+
+    private void stopSession() {
+        if (sshSession!=null) {
+            SSHUtils.execSSHCmd("\n", sshSession);
+        }
+        SSHUtils.stopSSH(sshSession);
+        sshSession = null;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        stopSession();
+        startSession();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        stopSession();
     }
 }
