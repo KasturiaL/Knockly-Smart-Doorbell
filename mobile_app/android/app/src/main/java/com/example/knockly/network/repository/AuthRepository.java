@@ -5,6 +5,7 @@ import com.example.knockly.network.AuthInterceptor;
 import com.example.knockly.network.dto.DoorbellOut;
 import com.example.knockly.network.dto.FaceResponse;
 import com.example.knockly.network.dto.IsSubscribedResponse;
+import com.example.knockly.network.dto.LinkedUser;
 import com.example.knockly.network.dto.LoginRequest;
 import com.example.knockly.network.dto.NotifSubscriptionRequest;
 import com.example.knockly.network.dto.PermissionResponse;
@@ -64,6 +65,10 @@ public class AuthRepository {
 
     public Call<FaceResponse[]> getDoorbellFaces(String doorbellId){
         return svc.getDoorbellFaces(doorbellId);
+    }
+
+    public Call<LinkedUser[]> getDoorbellLinkedUsers(String doorbellId){
+        return svc.getDoorbellLinkedUsers(doorbellId);
     }
 
     public Call<IsSubscribedResponse> checkIsSubscribed(String fcm_token, String doorbell_id){

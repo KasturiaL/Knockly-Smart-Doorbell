@@ -54,8 +54,7 @@ public class ManageFacesActivity extends AppCompatActivity {
         PageHeaderFragment pageHeader = PageHeaderFragment.newInstance("Manage Faces", true, true);
         getSupportFragmentManager().beginTransaction().replace(R.id.ManageFacesHeaderFragment, pageHeader).commit();
 
-        // Simple button to link to add new face page
-        // Feel free to change when developing actual UI
+        // Button to link to add new face page
         Button button = findViewById(R.id.AddFacesButton);
         button.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -89,11 +88,15 @@ public class ManageFacesActivity extends AppCompatActivity {
                     LinkedFacesFragment facesFragment = LinkedFacesFragment.newInstance(uniqueFacesArr);
                     getSupportFragmentManager().beginTransaction().replace(R.id.LinkedFacesFragment, facesFragment).commit();
                 }
+                else{
+                    Log.d("Manage Faces Activity", "Error fetching linked faces" + response.code());
+
+                }
             }
 
             @Override
             public void onFailure(Call<FaceResponse[]> call, Throwable t) {
-
+                Log.d("Manage Faces Activity", "Error fetching linked faces" + t.getMessage());
             }
         });
     }
