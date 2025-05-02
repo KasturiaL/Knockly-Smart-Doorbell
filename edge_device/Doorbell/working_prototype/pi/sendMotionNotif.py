@@ -17,7 +17,6 @@ def getToken():
 def main():
 	token = getToken()
 	url = base_url + endpoint
-	print(url)
 	data = {"token": token}
 	response = requests.post(url, json=data)
 	
