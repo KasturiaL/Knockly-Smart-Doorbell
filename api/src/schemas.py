@@ -42,7 +42,7 @@ class UserSettingsOut(BaseModel):
 class LinkedUserOut(BaseModel):
     user_id: int
     username: str
-    display_name: str
+    display_name: Optional[str] = None
     role_id: Optional[int] = None
     role_name: Optional[str] = None
 
