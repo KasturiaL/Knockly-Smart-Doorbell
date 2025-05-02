@@ -25,6 +25,7 @@ import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
 import com.example.knockly.utils.LoginManager;
 import com.example.knockly.utils.SSHUtils;
+import com.example.knockly.utils.ViewUtils;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
@@ -121,11 +122,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
 
     private void startSession() {
         if (!hostPi.isBlank()) {
-            try {
-                sshSession = SSHUtils.startSSH(username, hostPi, password);
-            } catch (JSchException e) {
-                System.out.println(e.getMessage());
-            }
+            sshSession = SSHUtils.startSSH(username, hostPi, password);
         }
     }
 
@@ -182,7 +179,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         constraints.applyTo(feedConstraint);
 
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) feedConstraint.getLayoutParams();
-        params.topMargin = 64;
+        params.topMargin = (int) ViewUtils.dpToPx(32, context);
         params.bottomMargin = 24;
         feedConstraint.setLayoutParams(params);
 
@@ -200,53 +197,48 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
     @Override
     public void openDoor() {
         if (sshSession != null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String command = "\ncd "+commandDir+"\n"+openCmd+"\n";
-                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
-                }
+            new Thread(() -> {
+                String command = "\ncd "+commandDir+"\n"+openCmd+"\n";
+                returnStatus = SSHUtils.execSSHCmd(command, sshSession);
+
+                runOnUiThread(() -> {
+                    // If door opened successfully then change door status button to open
+                    if (returnStatus == 200){
+                        liveFeedFragment.setToggleButtonOn();
+                        Toast.makeText(context, "Door opened successfully!", Toast.LENGTH_SHORT).show();
+                    }
+                    // If error occurred
+                    else{
+                        Toast.makeText(context, "Error opening door, please try again", Toast.LENGTH_SHORT).show();
+                    }
+
+                    returnStatus = -1;
+                });
             }).start();
         }
-
-        View view = findViewById(R.id.main);
-        // If door opened successfully then change door status button to open
-        if (returnStatus == 200){
-            liveFeedFragment.setToggleButtonOn();
-            Toast.makeText(context, "Door opened successfully!", Toast.LENGTH_SHORT).show();
-        }
-        // If error occurred
-        else{
-            Toast.makeText(context, "Error opening door, please try again", Toast.LENGTH_SHORT).show();
-        }
-
-        returnStatus = -1;
     }
 
     @Override
     public void closeDoor() {
         if (sshSession != null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String command = "\ncd "+commandDir+"\n"+closeCmd+"\n";
-                    returnStatus = SSHUtils.execSSHCmd(command, sshSession);
-                }
+            new Thread(() -> {
+                String command = "\ncd "+commandDir+"\n"+closeCmd+"\n";
+                returnStatus = SSHUtils.execSSHCmd(command, sshSession);
+
+                runOnUiThread(() -> {
+                    // If door opened successfully then change door status button to open
+                    if (returnStatus == 200){
+                        liveFeedFragment.setToggleButtonOff();
+                        Toast.makeText(context, "Door closed successfully!", Toast.LENGTH_SHORT).show();
+                    }
+                    // If error occurred
+                    else{
+                        Toast.makeText(context, "Error closing door, please try again", Toast.LENGTH_SHORT).show();
+                    }
+
+                    returnStatus = -1;
+                });
             }).start();
         }
-
-
-        View view = findViewById(R.id.main);
-        // If door opened successfully then change door status button to open
-        if (returnStatus == 200){
-            liveFeedFragment.setToggleButtonOff();
-            Toast.makeText(context, "Door closed successfully!", Toast.LENGTH_SHORT).show();
-        }
-        // If error occurred
-        else{
-            Toast.makeText(context, "Error closing door, please try again", Toast.LENGTH_SHORT).show();
-        }
-
-        returnStatus = -1;
     }
 }
