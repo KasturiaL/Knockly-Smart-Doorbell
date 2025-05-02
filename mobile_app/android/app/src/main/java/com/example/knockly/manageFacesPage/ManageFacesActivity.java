@@ -14,7 +14,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.knockly.R;
 import com.example.knockly.addFacePage.AddNewFaceActivity;
-import com.example.knockly.blocklistPage.BlocklistActivity;
 import com.example.knockly.network.dto.FaceResponse;
 import com.example.knockly.network.repository.AuthRepository;
 import com.example.knockly.shared.PageHeaderFragment;
@@ -62,19 +61,6 @@ public class ManageFacesActivity extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 Intent intent = new Intent(ManageFacesActivity.this, AddNewFaceActivity.class);
-                intent.putExtra("Doorbell_ID", doorbellId);
-                intent.putExtra("Doorbell_Name", doorbellName);
-                startActivity(intent);
-            }
-        });
-
-        // Simple button to link to blocklist page
-        // Feel free to change when developing actual UI
-        Button button2 = findViewById(R.id.FacesBlocklistButton);
-        button2.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(ManageFacesActivity.this, BlocklistActivity.class);
                 intent.putExtra("Doorbell_ID", doorbellId);
                 intent.putExtra("Doorbell_Name", doorbellName);
                 startActivity(intent);

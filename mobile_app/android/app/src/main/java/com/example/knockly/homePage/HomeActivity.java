@@ -39,18 +39,6 @@ public class HomeActivity extends AppCompatActivity {
             return insets;
         });
 
-        // TODO: delete testing code
-        // Add test info to screen
-        LoginManager loginManager = LoginManager.getInstance(this);
-        TextView testText = findViewById(R.id.testTextHome);
-        String testUsername = loginManager.getCurrentUsername();
-        Log.d("Home Activity", loginManager.getCurrentUsername());
-        if (Objects.equals(testUsername, "")){
-            testUsername =  "Not logged in";
-        }
-        testText.setText(testUsername);
-
-
         // Get relevant doorbells from database
         Log.d("Home Activity", "Fetching doorbells");
         repo.getUsersDoorbells().enqueue(new Callback<DoorbellOut[]>() {

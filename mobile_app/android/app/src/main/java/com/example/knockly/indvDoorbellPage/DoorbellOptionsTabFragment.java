@@ -13,8 +13,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.knockly.R;
-import com.example.knockly.doorbellLogsPage.DoorbellLogsActivity;
-import com.example.knockly.feedHistoryPage.FeedHistoryActivity;
 import com.example.knockly.manageDoorbellPage.ManageDoorbellActivity;
 import com.example.knockly.manageFacesPage.ManageFacesActivity;
 import com.example.knockly.manageUsersPage.ManageUsersActivity;
@@ -88,24 +86,18 @@ public class DoorbellOptionsTabFragment extends Fragment {
                 view.findViewById(R.id.manageUsersButton),
                 view.findViewById(R.id.manageFacesButton),
                 view.findViewById(R.id.manageDoorbellButton),
-                view.findViewById(R.id.feedHistoryButton),
-                view.findViewById(R.id.doorbellLogsButton)
         };
 
         Class[] destinationActivities = {
                 ManageUsersActivity.class,
                 ManageFacesActivity.class,
                 ManageDoorbellActivity.class,
-                FeedHistoryActivity.class,
-                DoorbellLogsActivity.class
         };
 
         final String[] permissionNames = {
                 "manage_user_profiles",
                 "manage_face_profiles",
                 "manage_doorbell",
-                "view_feed_history",
-                "view_doorbell_logs"
         };
 
         for (int m = 0; m < buttons.length; m++){

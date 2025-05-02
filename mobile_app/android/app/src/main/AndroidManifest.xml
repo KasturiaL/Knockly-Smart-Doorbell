@@ -65,16 +65,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".createRolePage.CreateRoleActivity"
-            android:exported="false" />
-        <activity
-            android:name=".blocklistPage.BlocklistActivity"
-            android:exported="false" />
-        <activity
             android:name=".addFacePage.AddNewFaceActivity"
-            android:exported="false" />
-        <activity
-            android:name=".doorbellLogsPage.DoorbellLogsActivity"
             android:exported="false" />
         <activity
             android:name=".manageFacesPage.ManageFacesActivity"
@@ -83,13 +74,7 @@
             android:name=".manageUsersPage.ManageUsersActivity"
             android:exported="false" />
         <activity
-            android:name=".feedHistoryPage.FeedHistoryActivity"
-            android:exported="false" />
-        <activity
             android:name=".appSettingsPage.AppSettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".loginPage.ResetPasswordActivity"
             android:exported="false" />
         <activity
             android:name=".loginPage.CreateAccountActivity"

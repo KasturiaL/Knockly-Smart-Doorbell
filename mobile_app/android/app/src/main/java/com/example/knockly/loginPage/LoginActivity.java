@@ -69,7 +69,6 @@ public class LoginActivity extends AppCompatActivity {
         EditText editPassword = findViewById(R.id.editPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView linkRegister = findViewById(R.id.linkRegister);
-        TextView linkResetPass = findViewById(R.id.linkForgotPass);
 
         Button biometricBtn = findViewById(R.id.biometricsButton);
         TextView biometricLabel = findViewById(R.id.biometricButtonLabel);
@@ -134,14 +133,6 @@ public class LoginActivity extends AppCompatActivity {
             });
         });
 
-        // TODO: remove test code
-        TextView testText = findViewById(R.id.testTextLogin);
-        String testUsername = lm.getCurrentUsername();
-        if (Objects.equals(testUsername, "")) {
-            testUsername = "Not logged in";
-        }
-        testText.setText(testUsername);
-
         // Check if user can use biometric login
         // If not remove button
         if (lm.loginIsExpired()) {
@@ -186,15 +177,6 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(LoginActivity.this, CreateAccountActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        // Link to forgot password page
-        linkResetPass.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(LoginActivity.this, ResetPasswordActivity.class);
                 startActivity(intent);
             }
         });
