@@ -50,9 +50,6 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Get login manager to use
-        LoginManager loginManager = LoginManager.getInstance(this);
-
         // Check if biometrics can be used
         BiometricManager biometricManager = BiometricManager.from(this);
         switch (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG | BiometricManager.Authenticators.DEVICE_CREDENTIAL)) {
@@ -139,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // TODO: remove test code
         TextView testText = findViewById(R.id.testTextLogin);
-        String testUsername = loginManager.getCurrentUsername();
+        String testUsername = lm.getCurrentUsername();
         if (Objects.equals(testUsername, "")) {
             testUsername = "Not logged in";
         }
@@ -147,18 +144,39 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check if user can use biometric login
         // If not remove button
-        if (loginManager.loginIsExpired()) {
+        if (lm.loginIsExpired()) {
             // Remove button & label
             removeBiometricsButton();
         } else {
             // Prefill username section if already logged in
-            String username = loginManager.getCurrentUsername();
+            String username = lm.getCurrentUsername();
             editUsername.setText(username);
-            // Add onClick function
-            biometricBtn.setOnClickListener(new View.OnClickListener() {
+
+            // Check if JWT is still valid
+            repo.getCurrentUser().enqueue(new Callback<UserInfo>() {
                 @Override
-                public void onClick(View view) {
-                    biometricLogin();
+                public void onResponse(Call<UserInfo> call, Response<UserInfo> response) {
+                    if (response.isSuccessful()){
+                        // If token valid allow biometric login
+                        biometricBtn.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                biometricLogin();
+                            }
+                        });
+                    }
+                    // If response unsuccessful (unauthorised because of invalid token)
+                    // ask to sign in to get fresh token
+                    else{
+                        removeBiometricsButton();
+                    }
+                }
+
+                // If response unsuccessful (unauthorised because of invalid token)
+                // ask to sign in to get fresh token
+                @Override
+                public void onFailure(Call<UserInfo> call, Throwable t) {
+                    removeBiometricsButton();
                 }
             });
         }
