@@ -313,10 +313,6 @@ def run_live_recognition():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-# ------------------------- Arduino Logging Thread -------------------------
-
-
-
 # ------------------------- FTP Server Thread -------------------------
 
 def start_ftp_server():
@@ -330,8 +326,15 @@ def start_ftp_server():
 # ------------------------- Startup & Shutdown -------------------------
 
 def setup():
+    global arduino
+    
     send_command("0")
 
+    time.sleep(2)
+
+    arduino = serial.Serial(pc_port, baudrate=baud_rate, timeout=timeout_s)
+
+    print("Listening for log messages...")
 
 def main():
     setup()
