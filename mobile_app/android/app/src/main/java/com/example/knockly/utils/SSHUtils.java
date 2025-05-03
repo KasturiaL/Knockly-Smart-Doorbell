@@ -127,6 +127,7 @@ public class SSHUtils {
                     Log.d(TAG, "getPiIP() :: SSH successful on " + ip);
                     return ip;
                 }
+                Log.d(TAG, "getPiIP() :: No pi on the network");
                 return null;
             }));
         }
