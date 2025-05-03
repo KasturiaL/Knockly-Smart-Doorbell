@@ -1,7 +1,7 @@
 import requests
 import os
 
-base_url = "https://e415-82-9-107-138.ngrok-free.app"
+base_url = "https://mutual-osprey-actually.ngrok-free.app"
 endpoint = "/notifications/notify/motionDetected"
 
 tokenLocation = "/home/admin/.doorbell_id_token.txt"
@@ -14,7 +14,7 @@ def getToken():
 	else:
 		raise FileNotFoundError(f"Token not found at {tokenLocation}")
 		
-def main():
+def personAtDoorNotif(): # call this to send notification
 	token = getToken()
 	url = base_url + endpoint
 	data = {"token": token}
