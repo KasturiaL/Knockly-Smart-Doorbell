@@ -1,91 +1,192 @@
-# GUI now runs on the main thread. Prior issue was with GUI (opencv.imshow - GTK) running on a daemon thread, causing the seg-fault.
-# Added orientation‑handling helpers (for rotation) back in order to standardize video across phone and face_rec library.
-# Possibly fixed dlib threading issues by using a lock around all dlib calls.
-# Added "is_file_complete" helper so that we never process a video whilst still being uploaded through FTP (race-condition fix).
-# Also wrapped all thread bodies in try/except to catch any errors and log them.
-
 # ------------------------- Imports -------------------------
+
 import os, cv2, pickle, shutil, threading, time, datetime, serial, mysql.connector
-import face_recognition, numpy as np
+import serial.tools.list_ports
+import face_recognition
+import numpy as np
 from pathlib import Path
 from picamera2 import Picamera2
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers    import FTPHandler
-from pyftpdlib.servers     import FTPServer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
+from libcamera import Transform
 
+import sendMotionNotif
 
 # ------------------------- Configuration -------------------------
-pi_port            = "/dev/ttyACM0"
-baud_rate          = 9600
-timeout_s          = 0.1
 
+# Function to dynamically find the usb port the Arduino is connected to
+def find_arduino_port():
+    # Gets all the ports currently in use
+	ports = serial.tools.list_ports.comports()
+
+    # Checking each port to see if it is the Arduino port
+	for port in ports:
+		if ("Arduino" in port.description or "ttyACM" in port.device or "ttyUSB" in port.device): # Found Arduino port
+            # Returns the usb port that the Arduino is connected to
+			return port.device 
+			
+	return None
+
+# Arduino variables configuration    
+pi_port = find_arduino_port()
+baud_rate = 9600
+timeout_s = 0.1
+
+# FTP server variables configuration
 FTP_USER           = "pi"
 FTP_PASSWORD       = "raspberry"
+
+# File names configuration
 FTP_DIR            = "ftp_videos"
 PROCESSED_DIR      = "processed_videos"
 COMMAND_FILE       = "command.txt"
 
+# Database configuration
 DB_CONFIG = {
-    "host":     "localhost",
-    "user":     "door_user",
+    "host": "localhost",
+    "user": "door_user",
     "password": "door_user_door_user",
     "database": "smart_door_db",
 }
 
-DOORBELL_ID           = 1
-MIN_VIDEO_DURATION    = 15     # seconds
-BRIGHTNESS_THRESHOLD  = 32     # mean gray value 0–255
-OPEN_DOOR_COOLDOWN    = 5      # seconds between re‑opening
+# Doorbell configuration
+DOORBELL_ID = 1
+
+# Threshold configuration
+MIN_VIDEO_DURATION = 15     # seconds
+BRIGHTNESS_THRESHOLD = 32     # mean gray value 0–255
+
+# Door cooldown configuration
+OPEN_DOOR_COOLDOWN = 5      # seconds between re‑opening
 
 # ------------------------- Paths & Files -------------------------
-base_dir       = Path(__file__).parent
-log_file       = base_dir / "log.txt"
-ftp_dir        = base_dir / FTP_DIR
-processed_dir  = base_dir / PROCESSED_DIR
-command_file   = base_dir / COMMAND_FILE
 
+# Getting parent directory
+base_dir = Path(__file__).parent
+
+# File directories
+log_file = base_dir / "log.txt"
+ftp_dir = base_dir / FTP_DIR
+processed_dir = base_dir / PROCESSED_DIR
+command_file = base_dir / COMMAND_FILE
+
+# Ensures that FTP directory and processed videos directory are always present
 ftp_dir.mkdir(exist_ok=True)
 processed_dir.mkdir(exist_ok=True)
 
-# ------------------------- helper to detect already-done videos ----------
-def has_been_processed(path: Path) -> bool:            # 
-    """True if a file with the same name already sits in processed_videos/."""  #
-    return (processed_dir / path.name).exists()        # 
-
 # ------------------------- Hardware Setup -------------------------
+
+# Arduino object creation
 arduino = serial.Serial(pi_port, baudrate=baud_rate, timeout=timeout_s)
 
+# Camera creation and configuration
 cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"format": "XRGB8888", "size": (640, 480)}))
-cam.start()
+cam.configure(cam.create_video_configuration(main={"format": "XRGB8888", "size": (640, 480)}, transform=Transform(rotation=180)))
 
-# ------------------------- Global Locks -------------------------
+
+# ------------------------- Global Locks ------------------------- (need help commenting this)
+
 DLIB_LOCK = threading.Lock()  # All dlib calls are now single‑threaded
 
 # ------------------------- Utility Functions -------------------------
 
-def log(msg: str) -> None:
-    now = datetime.datetime.now().strftime("%x %X")
+# Function that creates and prints a log message to terminal and log_file
+def log(msg):
+    # Gets current date and time
+    now = datetime.datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")
+
+    # Creates log message
     line = f"{now} | {msg}"
+
+    # Prints log message for debugging
     print(line)
+
+    # Opens log file to append log message
     with log_file.open("a") as f:
-        f.write(line + "\n"); f.flush()
+        # Adds message and skips to next line
+        f.write(line + "\n") 
 
+        # Instantly appends log message
+        f.flush()
 
-def send_command(cmd: str) -> None:
-    """Relay a single‑character command to command.txt *and* the Arduino."""
+# Function to send a command to the Arduino
+def send_command(cmd):
     try:
-        with command_file.open("w") as f:
-            f.write(cmd)
-        arduino.write(cmd.encode())
-    except Exception as e:
+        # Sends the command to the Arduino
+        arduino.write(bytes(cmd, 'utf-8'))
+    except Exception as e: # Catches any error
+        # Logs error
         log(f"[ERROR] Sending command {cmd}: {e}")
+
+    # Gives time for Arduino to execute command
     time.sleep(0.05)
-    if   cmd == "0": log("Middleman startup complete.")
-    elif cmd == "1": log("Phone has opened the door.")
-    elif cmd == "2": log("Phone has closed the door.")
-    elif cmd == "3": log("Known face detected – door opened.")
-    elif cmd == "4": log("Blocked face detected – door kept shut.")
+    
+    # Checks which command was sent
+    if   cmd == "0": # Python script startup
+        # Logs message
+        log("Middleman startup complete.")
+    elif cmd == "1": # Open door command
+        # Logs message
+        log("Phone has requested to open the door.")
+    elif cmd == "2": # Close door command
+        # Logs message
+        log("Phone has requested to close the door.")
+    elif cmd == "3": # Known face detected
+        # Logs message
+        log("Known face detected.")
+    elif cmd == "4": # Blocked face detected
+        # Logs message
+        log("Blocked face detected.")
+
+# Function to read and log any messages from the Arduino
+def read():
+    try:
+        # Reads the Arduino Serial for any new messages
+        line = arduino.readline().decode("utf-8", errors="ignore").strip()
+
+        # Message received from Arduino
+        if line:
+            # Logs message
+            log(line)
+    except Exception as e: # Catches any error
+        # Logs error
+        log(f"[ERROR] Reading Arduino: {e}")
+
+# Function to check for commands from command_file
+def check_command():
+    # Check if command_file exists
+    if command_file.is_file(): # Exists
+
+        # Opens command_file
+        with command_file.open('r') as f:
+
+            # Reads the data in command_file
+            command = f.read().strip()
+
+        # Removes command_file from file directory to not repeat command
+        command_file.unlink()
+
+        # Returns command
+        return command
+    
+    # Returns nothing is there is no command_file
+    return None
+
+def python_loop():
+    while True:
+        # Gets command from command_file
+        command = check_command()
+
+        # Checks if there is a command
+        if command: # There is a command
+            send_command(command)
+
+        # Reads and logs any messages sent from the Arduino
+        read()
+
+        # Adds small delay to prevent CPU hogging
+        time.sleep(0.1)
 
 
 # ------------------------- dlib‑safe wrappers -------------------------
@@ -94,11 +195,9 @@ def dlib_face_locations(img):
     with DLIB_LOCK:
         return face_recognition.face_locations(img)
 
-
 def dlib_face_encodings(img, locs=None):
     with DLIB_LOCK:
         return face_recognition.face_encodings(img, locs)
-
 
 # ------------------------- Orientation Helpers -------------------------
 ROTATE_CODE = {
@@ -111,7 +210,6 @@ ROTATE_CODE = {
 def rotate_image(img, angle):
     code = ROTATE_CODE[angle]
     return img if code is None else cv2.rotate(img, code)
-
 
 def find_faces_multi_orientation(img_rgb):
     """Return encodings for the first rotation (0/90/180/270) that yields faces."""
@@ -207,6 +305,10 @@ def extract_encodings_from_video(video_path: str, doorbell_id: int):
 
 # ------------------------- Auto‑processing Thread -------------------------
 
+def has_been_processed(path: Path) -> bool:            # 
+    """True if a file with the same name already sits in processed_videos/."""  #
+    return (processed_dir / path.name).exists()        # 
+
 def process_latest_video(doorbell_id):
     for mp4 in ftp_dir.glob("*.mp4"):
         if not is_file_complete(mp4):
@@ -247,6 +349,7 @@ def run_live_recognition():
             log(f"[ERROR] Recognition failed: {e}"); continue
 
         for (t, r, b, l), enc in zip(locs, encs):
+            
             matches = face_recognition.compare_faces(known_encs, enc)  # compare still OK without lock
             name    = "Unknown"
             if known_encs:
@@ -262,23 +365,15 @@ def run_live_recognition():
 
             now = time.time()
             if name != "Unknown" and (now - last_open_time) >= OPEN_DOOR_COOLDOWN:
-                send_command("3"); last_open_time = now
+                send_command("3")
+                last_open_time = now
+            elif name == "Unknown" and (now - last_open_time) >= OPEN_DOOR_COOLDOWN:
+                # Send notification
+                sendMotionNotif.personAtDoorNotif()
 
         cv2.imshow("Live Feed", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-# ------------------------- Arduino Logging Thread -------------------------
-
-def arduino_logger():
-    while True:
-        try:
-            line = arduino.readline().decode("utf-8", errors="ignore").strip()
-            if line:
-                log(f"Arduino: {line}")
-        except Exception as e:
-            log(f"[ERROR] Reading Arduino: {e}")
-        time.sleep(0.1)
 
 # ------------------------- FTP Server Thread -------------------------
 
@@ -290,27 +385,60 @@ def start_ftp_server():
     log("[INFO] FTP Server started on port 2121.")
     server.serve_forever()
 
-# ------------------------- Startup & Shutdown -------------------------
+# ------------------------- Startup & Main loop -------------------------
 
-def setup():
+# Function that sets up and activates all needed components
+def startup():
+    # Connects to the global arduino object
+    global arduino
+
+    # Activates the camera
+    cam.start()
+
+    # Sends a command to the Arduino to restart
     send_command("0")
-    log("Middleman ready. Press 'q' in the preview window to quit.")
 
+    # Waits for Arduino to reset
+    time.sleep(2)
+    
+    # Finds the port the arduino is in
+    port = find_arduino_port()
+
+    # Recreates the arduino object with the new port 
+    arduino = serial.Serial(port, baudrate=baud_rate, timeout=timeout_s)
+
+    # Prints message for debugging
+    print("Listening for log messages...")
 
 def main():
-    setup()
+    # Runs startup sequence
+    startup()
 
+    # Starts the ftp server
     threading.Thread(target=start_ftp_server,  daemon=True).start()
-    threading.Thread(target=arduino_logger,    daemon=True).start()
+    
+    # Starts the video processing loop
     threading.Thread(target=auto_process_loop, daemon=True).start()
 
+    # Starts the command and logging loop
+    threading.Thread(target=python_loop,       daemon=True).start()
+
     try:
-        run_live_recognition()  # GUI on main thread → no seg‑faults
-    except KeyboardInterrupt:
+        # Starts live recognition
+        run_live_recognition()
+    except KeyboardInterrupt: # User stops the program with ctrl-C
+        # Logs shutdown sequence
         log("[INFO] KeyboardInterrupt – shutting down …")
     finally:
-        cam.stop(); cv2.destroyAllWindows(); log("[INFO] Clean shutdown complete.")
+        # Stops camera object
+        cam.stop()
 
+        # Closes all windows
+        cv2.destroyAllWindows()
 
+        # Logs shutdown complete message
+        log("[INFO] Clean shutdown complete.")
+
+#----------------------- Running -------------------------
 if __name__ == "__main__":
     main()
