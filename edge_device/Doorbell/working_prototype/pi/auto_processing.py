@@ -337,7 +337,7 @@ def run_live_recognition():
     last_open_time = 0.0
 
     while True:
-        frame = cam.capture_array().copy()
+        frame = cam.capture_array().copy() 
         small = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
         rgb   = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
         rgb   = np.ascontiguousarray(rgb)
@@ -369,7 +369,8 @@ def run_live_recognition():
                 last_open_time = now
             elif name == "Unknown" and (now - last_open_time) >= OPEN_DOOR_COOLDOWN:
                 # Send notification
-                sendMotionNotif.personAtDoorNotif()
+                threading.Thread(target=sendMotionNotif.personAtDoorNotif, daemon=True).start()
+                last_open_time = now
 
         cv2.imshow("Live Feed", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
