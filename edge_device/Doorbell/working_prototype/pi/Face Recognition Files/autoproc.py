@@ -469,3 +469,8 @@ def main():
         # Logs shutdown complete message
         log("[INFO] Clean shutdown complete.")
 
+# -----------------------------------------------------------
+#  Entry-point
+# -----------------------------------------------------------
+if __name__ == "__main__":
+    main()
