@@ -53,7 +53,7 @@ class DoorbellOut(BaseModel):
     doorbell_id: int
     doorbell_name: str
     owner_user_id: Optional[int] = None
-    linked_users: List[LinkedUserOut] = []  # <--- Added this line!
+    linked_users: List[LinkedUserOut] = []  
 
     class Config:
         orm_mode = True
@@ -80,7 +80,7 @@ class OverrideSet(BaseModel):
     permission_name: str
     is_granted: bool
 
-# ───────── face profiles (new) ─────────
+# ───────── face profiles ─────────
 class FaceProfileOut(BaseModel):
     face_id: int
     doorbell_id: int

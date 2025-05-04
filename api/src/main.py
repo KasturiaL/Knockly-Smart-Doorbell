@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
-import pyotp, qrcode, io, base64                     # for QR URL (optional)
+import pyotp, qrcode, io, base64                     # for QR URL
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import insert
@@ -17,7 +17,7 @@ app = FastAPI(title="Knockly API v2")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # LAN only – tighten later
+    allow_origins=["*"],   # LAN only 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -184,13 +184,13 @@ async def create_bell(body: schemas.DoorbellCreate,
 async def link_user(body: schemas.UserDoorbellLinkCreate,
                     me: models.User = Depends(current_user),
                     db: AsyncSession = Depends(database.get_session)):
-    # optional: validate that role_id exists
+    # validate that role_id exists
     if body.role_id:
         role_q = await db.execute(select(models.Role).where(models.Role.role_id == body.role_id))
         if not role_q.scalar():
             raise HTTPException(400, "Invalid role_id")
 
-    # optional: prevent duplicate linking
+    # prevent duplicate linking
     existing = await db.execute(
         select(models.user_doorbell)
         .where((models.user_doorbell.c.user_id == body.user_id) &
@@ -250,7 +250,7 @@ async def set_override(doorbell_id: int,
         raise HTTPException(404, "Unknown permission")
     return {"ok": True}
 
-# ---------- FACE PROFILES (optional) -------------------------
+# ---------- FACE PROFILES -------------------------
 @app.get("/doorbells/{bell_id}/faces", response_model=list[schemas.FaceProfileOut])
 async def bell_faces(bell_id: int,
                      me: models.User = Depends(current_user),

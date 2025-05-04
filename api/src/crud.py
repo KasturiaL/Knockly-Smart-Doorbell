@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload                       # NEW
+from sqlalchemy.orm import selectinload                       
 from typing import Optional, List, Set
 import models, security, schemas
 
@@ -190,7 +190,7 @@ async def set_override(
     await db.commit()
     return True
 
-# ---------- face profile helpers (NEW) ----------
+# ---------- face profile helpers ----------
 async def list_faces(db: AsyncSession, *, doorbell_id: int) -> List[models.FaceProfile]:
     stmt = select(models.FaceProfile).where(models.FaceProfile.doorbell_id == doorbell_id)
     res = await db.execute(stmt)

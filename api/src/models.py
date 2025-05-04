@@ -66,7 +66,7 @@ class Doorbell(Base):
     created_at                = Column(DateTime, default=datetime.utcnow)
 
     users          = relationship("User", secondary=user_doorbell, back_populates="doorbells")
-    face_profiles  = relationship(                     # ←-- NEW
+    face_profiles  = relationship(                     
         "FaceProfile",
         back_populates="doorbell",
         cascade="all, delete-orphan"
@@ -80,7 +80,7 @@ class DoorbellTokens(Base):
     doorbell_id         = Column(Integer, ForeignKey("doorbells.doorbell_id", ondelete="CASCADE"), nullable=False)
 
 
-class FaceProfile(Base):                               # ←-- NEW
+class FaceProfile(Base):                               
     __tablename__ = "face_profiles"
 
     face_id     = Column(Integer, primary_key=True)
