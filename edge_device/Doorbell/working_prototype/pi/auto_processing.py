@@ -149,10 +149,11 @@ def read():
         if line:
             # Logs message
             log(line)
+            if line == "Doorbell rung.": 
+                sendMotionNotif.personAtDoorNotif()
     except Exception as e: # Catches any error
         # Logs error
         log(f"[ERROR] Reading Arduino: {e}")
-
 # Function to check for commands from command_file
 def check_command():
     # Check if command_file exists
