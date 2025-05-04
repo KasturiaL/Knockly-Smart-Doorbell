@@ -30,12 +30,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class SSHUtils {
+    private static List<String> cachedHosts = null;  // Cache reachable hosts
+
 
     public static List<String> ping(String subnetIP) {
         final ExecutorService es = Executors.newFixedThreadPool(128);
         final List<Future<String>> futures = new ArrayList<>();
         final List<String> hosts = new ArrayList<>();
-        final int timeout = 200;
+        final int timeout = 300;
 
         for (int i = 1; i < 255; i++) {
             String ip = subnetIP + "." + i;
@@ -109,25 +111,29 @@ public class SSHUtils {
         return ipString;
     }
 
+    public static void initializeNetworkScan(Context context) {
+        if (cachedHosts != null) return;
+
+        int localHost = getLocalHost(context);
+        String subnet = getSubnetIP(localHost);
+        cachedHosts = ping(subnet);
+        Log.d(TAG, "initializeNetworkScan() :: Found hosts = " + cachedHosts);
+    }
+
     public static String getPiIP(Context context, String username, String password) {
-        int localHost = SSHUtils.getLocalHost(context);
-        String subnet = SSHUtils.getSubnetIP(localHost);
-        List<String> hosts = SSHUtils.ping(subnet);
-        System.out.println("Hosts: " + hosts);
+        if (cachedHosts == null) initializeNetworkScan(context); // Ensure ping is done
 
         final ExecutorService es = Executors.newFixedThreadPool(32);
         List<Future<String>> futures = new ArrayList<>();
 
-        for (String ip : hosts) {
+        for (String ip : cachedHosts) {
             futures.add(es.submit(() -> {
                 Session session = startSSH(username, ip, password);
-                assert session != null;
-                if (session.isConnected()) {
-                    session.disconnect();  // Clean up
+                if (session != null && session.isConnected()) {
+                    session.disconnect();
                     Log.d(TAG, "getPiIP() :: SSH successful on " + ip);
                     return ip;
                 }
-                Log.d(TAG, "getPiIP() :: No pi on the network");
                 return null;
             }));
         }
@@ -135,18 +141,18 @@ public class SSHUtils {
         try {
             for (Future<String> future : futures) {
                 try {
-                    String result = future.get((long) 1.5, java.util.concurrent.TimeUnit.SECONDS);  // Wait for each task
+                    String result = future.get(1500, java.util.concurrent.TimeUnit.MILLISECONDS);
                     if (result != null) {
-                        es.shutdownNow();  // Stop remaining tasks
+                        es.shutdownNow();
                         return result;
                     }
                 } catch (Exception ignored) {}
             }
         } finally {
-            es.shutdownNow();  // Ensure executor is closed
+            es.shutdownNow();
         }
 
-        return "";  // No valid SSH connection
+        return "";
     }
 
     public static Session startSSH(String username, String host, String password) {
