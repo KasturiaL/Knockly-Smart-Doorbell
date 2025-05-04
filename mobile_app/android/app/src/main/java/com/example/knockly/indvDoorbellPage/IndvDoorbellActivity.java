@@ -41,11 +41,12 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
     private Insets systemBars;
     private  LiveFeedFragment liveFeedFragment;
     private Context context;
-    private final String username = "pi";
-    private final String password = "raspberry";
-    public static String hostPi = "";
+    private final String username = "admin";
+    private final String password = "admin";
+    public static String hostPiFeed = "";
+    private static String hostPiMain = "";
     private Session sshSession;
-    public String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    private final String commandDir = "Test_facial_rec/phone_commands";
     private String openCmd = "\nchmod +x open.sh\n./open.sh\n";
     private String closeCmd = "\nchmod +x close.sh\n./close.sh\n";
 
@@ -68,7 +69,8 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
         String doorbellName = intent.getStringExtra("doorbell_name");
         String ownerID = intent.getStringExtra("owner_id");
         LinkedUser[] linkedUsers = (LinkedUser[]) intent.getSerializableExtra("linked_users");
-        hostPi = intent.getStringExtra("piHost");
+        hostPiFeed = intent.getStringExtra("piHost_feed");
+        hostPiMain = intent.getStringExtra("piHost_main");
 
         // Get information about users current permissions from API
         repo.getUserPerms(doorbellID).enqueue(new Callback<PermissionResponse[]>() {
@@ -110,7 +112,7 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
 
         context = getApplicationContext();
 
-        if (!hostPi.isBlank()) {
+        if (!hostPiMain.isBlank()) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -121,8 +123,8 @@ public class IndvDoorbellActivity extends AppCompatActivity implements LiveFeedF
     }
 
     private void startSession() {
-        if (!hostPi.isBlank()) {
-            sshSession = SSHUtils.startSSH(username, hostPi, password);
+        if (!hostPiMain.isBlank()) {
+            sshSession = SSHUtils.startSSH(username, hostPiMain, password);
         }
     }
 

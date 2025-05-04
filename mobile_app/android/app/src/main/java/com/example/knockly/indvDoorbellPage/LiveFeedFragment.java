@@ -1,6 +1,6 @@
 package com.example.knockly.indvDoorbellPage;
 
-import static com.example.knockly.indvDoorbellPage.IndvDoorbellActivity.hostPi;
+import static com.example.knockly.indvDoorbellPage.IndvDoorbellActivity.hostPiFeed;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -143,12 +143,12 @@ public class LiveFeedFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z", Locale.getDefault());
         editTextDate.setText(sdf.format(new Date(initialTime)));
 
-        if (!hostPi.isBlank()) {
+        if (!hostPiFeed.isBlank()) {
             noInputText.setVisibility(View.GONE);  // Hide the message
             playerView.setVisibility(View.VISIBLE);
             playerView2.setVisibility(View.INVISIBLE);
             liveText.setVisibility(View.VISIBLE);
-            String rtspUri = "rtsp://" + hostPi + ":8554/doorbell";
+            String rtspUri = "rtsp://" + hostPiFeed + ":8554/doorbell";
 
             initializePlayer(rtspUri);
             timestampHandler.post(updateTimestampRunnable);
