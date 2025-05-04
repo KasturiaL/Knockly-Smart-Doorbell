@@ -27,6 +27,13 @@ import com.google.android.material.button.MaterialButton;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
 /**
  * A {@link Fragment} subclass that takes an array of json objects representing
  * all doorbells the user is currently attached to.
@@ -41,11 +48,9 @@ public class HomePageButtonsFragment extends Fragment {
 
     private DoorbellOut[] mDoorbells;
     private Context context;
-    private String piHost = "";
-    private final String username = "pi";
-    private final String password = "raspberry";
-    private Session sshSession;
-    private final String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    private HashMap<String, HashMap<String, String>> doorbells = new HashMap<>();
+    private Session feedSession;
+    public String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
     private final String serverCmd = "\nchmod +x startServer.sh\n./startServer.sh";
     private int returnStatus;
 
@@ -80,6 +85,17 @@ public class HomePageButtonsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        HashMap<String, String> main = new HashMap<>();
+        main.put("username", "admin");
+        main.put("password", "admin");
+        main.put("piHost", "");
+        HashMap<String, String> feed = new HashMap<>();
+        feed.put("username", "pi");
+        feed.put("password", "raspberry");
+        feed.put("piHost", "");
+        doorbells.put("main", main);
+        doorbells.put("feed", feed);
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home_page_buttons, container, false);
 
@@ -94,10 +110,16 @@ public class HomePageButtonsFragment extends Fragment {
         context = getContext();
 
         final Thread networkThread = new Thread(() -> {
-            if (piHost.isBlank()) {
-                piHost = SSHUtils.getPiIP(context, username, password);
-                System.out.println(piHost);
+            // Populate piHost fields
+            for (String key : doorbells.keySet()) {
+                HashMap<String, String> creds = doorbells.get(key);
+                String username = creds.get("username");
+                String password = creds.get("password");
+                String piHost = SSHUtils.getPiIP(context, username, password);
+                creds.put("piHost", piHost);  // Store result back in map
+                System.out.println("Found piHost for " + key + ": " + piHost);
             }
+
 
             // After data fetched, update UI
             requireActivity().runOnUiThread(() -> {
@@ -108,11 +130,16 @@ public class HomePageButtonsFragment extends Fragment {
                 setupButtons(layout);
             });
 
-            startSession();
+            // Start session for feed
+            String feedHost = doorbells.get("feed").get("piHost");
+            String feedUser = doorbells.get("feed").get("username");
+            String feedPass = doorbells.get("feed").get("password");
 
-            if (sshSession != null) {
+            startSession(feedUser, feedHost, feedPass);
+
+            if (feedSession != null) {
                 String command = "\ncd "+commandDir+"\n"+serverCmd;
-                returnStatus = SSHUtils.execSSHCmd(command, sshSession);
+                returnStatus = SSHUtils.execSSHCmd(command, feedSession);
             }
         });
         networkThread.start();
@@ -163,7 +190,8 @@ public class HomePageButtonsFragment extends Fragment {
                             intent.putExtra("doorbell_name", doorbellName);
                             intent.putExtra("owner_id", ownerID);
                             intent.putExtra("linked_users", linkedUsers);
-                            intent.putExtra("piHost", piHost);
+                            intent.putExtra("piHost_main", doorbells.get("main").get("piHost"));
+                            intent.putExtra("piHost_feed", doorbells.get("feed").get("piHost"));
                             startActivity(intent);
                         }
                     });
@@ -192,25 +220,30 @@ public class HomePageButtonsFragment extends Fragment {
         });
     }
 
-    private void startSession() {
+    private void startSession(String username, String piHost, String password) {
         if (!piHost.isBlank()) {
-            sshSession = SSHUtils.startSSH(username, piHost, password);
+            feedSession = SSHUtils.startSSH(username, piHost, password);
         }
     }
 
     private void stopSession() {
-        if (sshSession!=null) {
-            SSHUtils.execSSHCmd("\n", sshSession);
+        if (feedSession!=null) {
+            SSHUtils.execSSHCmd("\n", feedSession);
         }
-        SSHUtils.stopSSH(sshSession);
-        sshSession = null;
+        SSHUtils.stopSSH(feedSession);
+        feedSession = null;
     }
 
     @Override
     public void onPause() {
         super.onPause();
         stopSession();
-        startSession();
+        // Start session for feed
+        String feedHost = doorbells.get("feed").get("piHost");
+        String feedUser = doorbells.get("feed").get("username");
+        String feedPass = doorbells.get("feed").get("password");
+
+        startSession(feedUser, feedHost, feedPass);
     }
 
     @Override
