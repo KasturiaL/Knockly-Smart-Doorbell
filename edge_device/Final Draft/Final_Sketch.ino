@@ -56,10 +56,9 @@ void setup() {
 	// Setting max serial data wait time 
 	Serial.setTimeout(1);
 
-  // Setting block to wait for Serial to activate
-  while(!Serial) {
-    ;
-  }
+  //while(!Serial) {
+    //;
+  //}
 
   // Prints message to log
   Serial.println("Arduino startup complete.");
@@ -96,12 +95,19 @@ void loop() {
 
   // Detects if the manual override button is pressed
   if (manualButtonState == LOW) { // Button pressed
+    // Prints log to Serial
+    Serial.println("Manual open button pressed.");
+
     // Runs function
     open_close();
 
+    // Adds delay so door can close without triggering an alarm
+    delay(1000);
+
     // Changing flag for logging and preventing spam
     wasIdle = false;
-    delay(1000);
+
+    
   }
 
   // Doorbell button check
@@ -152,85 +158,6 @@ void open_close() {
   close();
 }
 
-// Function that sets the system at an idle state
-void idle() {
-
-  // Prints log to Serial
-  Serial.println("Door idle."); 
-}
-
-
-
-// Function that reads commands from python to execute actions
-void override() {
-  // Translates the serial data as integers
-  overrideCommand = Serial.readString().toInt();
-
-  // Checks which command is sent
-  if (overrideCommand == 0) { // System startup
-    // Runs function
-
-  }
-  else if (overrideCommand == 1) { // Open command
-    // Runs function
-    open();
-
-    // Disables alarm
-    disableAlarm = true;
-  } else if (overrideCommand == 2){ // Close command
-    // Runs function
-    close();
-
-    // Enables alarm
-    disableAlarm = false;
-  } else if (overrideCommand == 3){ // Face scanned
-
-    // Runs function
-    open_close();
-  }
-
-
-  // Clears Serial for next command
-  Serial.read();
-}
-
-// Function that closes the door
-void close() {
-
-  // Closes the door
-  door.write(90);
-
-  // Prints log to Serial
-  Serial.println("Door closed.");
-}
-
-// Function that opens the door
-void open() {
-  // Opens the door
-  door.write(0);
-
-  // Prints log to Serial
-  Serial.println("Door opened.");
-}
-
-// Function that rings the alarm
-void alarm(){
-
-  // Prints log to Serial
-  Serial.println("Alarm rung.");
-
-  // Alarm segment
-  for (int count = 0; count < 10; count++) { // Loops chord 10 times
-    // Plays a high note for 0.1 second
-    tone(buzzerPort, 100);
-    delay(100);
-
-    // Plays no sound for 0.1 second
-    noTone(buzzerPort);
-    delay(100);
-  }
-}  
-
 // Function that rings the doorbell
 void doorbell() {
 
@@ -256,11 +183,101 @@ void doorbell() {
   noTone(buzzerPort);
 }
 
+// Function that rings the alarm
+void alarm(){
+
+  // Prints log to Serial
+  Serial.println("Alarm rung.");
+
+  // Alarm segment
+  for (int count = 0; count < 10; count++) { // Loops chord 10 times
+    // Plays a high note for 0.1 second
+    tone(buzzerPort, 100);
+    delay(100);
+
+    // Plays no sound for 0.1 second
+    noTone(buzzerPort);
+    delay(100);
+  }
+}  
+
+// Function that sets the system at an idle state
+void idle() {
+
+  // Prints log to Serial
+  Serial.println("Door idle."); 
+}
+
 // Function to reset the arduino
 void reset() {
   // Initiates (almost) instant restart
   wdt_enable(WDTO_15MS);
 
   // Prevents unwanted code executions
-  while (1);
+  while(1);
 }
+
+// Function that opens the door
+void open() {
+  // Opens the door
+  door.write(0);
+
+  // Prints log to Serial
+  Serial.println("Door opened.");
+}
+
+// Function that closes the door
+void close() {
+
+  // Closes the door
+  door.write(90);
+
+  // Prints log to Serial
+  Serial.println("Door closed.");
+}
+
+// Function that reads commands from python to execute actions
+void override() {
+  // Translates the serial data as integers
+  overrideCommand = Serial.readString().toInt();
+
+  // Checks which command is sent
+  if (overrideCommand == 0) { // System startup
+    // Runs function
+    reset();
+  }
+  else if (overrideCommand == 1) { // Open command
+    // Runs function
+    open();
+
+    // Disables alarm
+    disableAlarm = true;
+  } else if (overrideCommand == 2){ // Close command
+    // Runs function
+    close();
+
+    // Adds delay so door can close without triggering an alarm
+    delay(1000);
+
+    // Enables alarm
+    disableAlarm = false;
+  } else if (overrideCommand == 3){ // Allowed face scanned
+
+    // Runs function
+    open_close();
+
+    // Adds delay so door can close without triggering an alarm
+    delay(1000);
+    
+  }
+
+  // Clears Serial for next command
+  Serial.read();
+}
+
+
+
+
+
+
+
