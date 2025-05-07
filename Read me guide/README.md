@@ -15,3 +15,12 @@ This repository is the main folder where our group stores all the nessesary scri
 For the sake of us not confusing which folder belongs to which team, we made multiple folders with the names of different sections. That was, we would not add code from our team to another part.
 
 For the edge_device folder, we split the folder into sections of Python and Arduino since they are techincally different types of projects. We did try to split the notification script from the main python code, but we weren't able to split the facial recogntion since we merge them together without thinking fo the future.
+
+## Folder directory
+
+> api
+    - 
+> docs
+> edge_device
+> mobile_app
+> README.md
