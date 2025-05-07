@@ -26,4 +26,4 @@ def personAtDoorNotif(): # call this to send notification
 	
 
 if __name__=="__main__":
-    main()
+    personAtDoorNotif()
