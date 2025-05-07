@@ -2,25 +2,17 @@
 
 ## Setup
 
-You will need to have set up the Arduino according to the README file there, and have connected the Arduino to the Pi itself for the system to recognize the Arduino.
-
-You will need to have activated the API on your system so that the Python script can run the notification system correctly.
+You will need to have completed the setup instructions in the [api folder](../../api/README.md), the [Arduino folder](../Arduino/README.md) and the [mobile_app folder](../../mobile_app/README.md).
 
 ## Usage
 
-Please run these bash scripts in /edge_device/Startup Scripts in this sequence as to ensure every single component works:
+Please run these [bash scripts](<../Startup scripts>) in this sequence as to ensure every single component works:
 
 1. ngrok.sh
 2. uvicorn.sh
 3. auto.sh
 
-While the system is in use, the ranger must be placed sensor down so that the system will not trigger the alarm function (or change the disableAlarm flag to true).
-
-The message outputs will be sent to the Serial Monitor in the Arduino IDE and the auto.sh terminal as well if you want to see them somewhere other than the log.txt.
-
-The button on D4 is the button that triggers the open and close cycle of the door.
-
-The button on D8 is the button that triggers the doorbell ring.
+Please follow the usage intruction in the [Arduino folder](../Arduino/README.md) and the [mobile_app folder](../../mobile_app/README.md) as well.
 
 ## Common Problems
 
@@ -43,3 +35,11 @@ The face id encodings are stored on the database on the pi.
 **The system is not training off of the video I sent from my phone?**
 
 You may have named the video with an existing name in processed_videos.
+
+**Notifications not sending to the app?**
+
+You may have not connected your phone to the same network as the doorbell.
+
+**Not getting a live feed?**
+
+You may have not activated the ngrok.sh and uvicorn.sh scripts.

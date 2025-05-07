@@ -1,1 +1,0 @@
-Common issues that might happen while setting up or using the system, and how to solve them
