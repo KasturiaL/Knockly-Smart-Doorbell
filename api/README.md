@@ -18,6 +18,8 @@ cd src
 # one-time: create a signing key for JWTs
 export JWT_SECRET=$(openssl rand -hex 32)
 
+ngrok http --url=mutual-osprey-actually.ngrok-free.app 8000
+
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
