@@ -22,6 +22,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 API Base Url: `https://mutual-osprey-actually.ngrok-free.app`
+
 Interactive docs available at `https://mutual-osprey-actually.ngrok-free.app/docs`.
 
 ---
