@@ -8,4 +8,8 @@ Requirments for README.md
 
 # Group Project Repository
 
-This repository is the main folder where our group stores all the nessesary scripts and files that we made in 
+This repository is the main folder where our group stores all the nessesary scripts and files that we made in this group project.
+
+## How we organized our code
+
+For the sake of us not confusing which folder belongs to which team, we made multiple folders with the names of different sections  
