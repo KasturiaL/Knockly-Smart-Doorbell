@@ -5,7 +5,7 @@ Knockly has an android app that can be used to connect to the doorbell, add face
 ## Installation
 To install the app on a device you must first install Android Studio. 
 
-Then open the project on Android Studio in the **mobile_app/android folder** (if you do not open it in the correct folder it will not build correctly and you won't be able to run it).
+Then open the project on Android Studio in the **mobile_app/android** folder (if you do not open it in the correct folder it will not build correctly and you won't be able to run it).
 
 Once opened a Gradle build should run to compile the app.
 
@@ -23,7 +23,7 @@ username: johnDoe25
 email: johnDoe@example.com
 password: password
 ```
-*Note:* The database is stored locally on the pi so these login details will only work on the pi provided
+*Note:* This login will only work if using the database sql file provided on the GitLab
 
 All options to interact with each doorbell can be found by clicking the button for the corresponding doorbell on the home page. Here you can see the live feed, open and close the door remotely as well as manage any users and faces connected to the doorbell as well as change the doorbell settings itself.
 
