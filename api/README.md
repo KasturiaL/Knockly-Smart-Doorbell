@@ -10,8 +10,10 @@ One `uvicorn` worker talks to the local MariaDB instance—no extra services req
 ```bash
 cd api                   # project root on the Pi
 python3 -m venv venv && source venv/bin/activate
-cd src
+
 pip install -r requirements.txt
+
+cd src
 
 # one-time: create a signing key for JWTs
 export JWT_SECRET=$(openssl rand -hex 32)
@@ -19,7 +21,8 @@ export JWT_SECRET=$(openssl rand -hex 32)
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-Interactive docs available at `http://<pi-ip>:8000/docs`.
+API Base Url: `https://mutual-osprey-actually.ngrok-free.app`
+Interactive docs available at `https://mutual-osprey-actually.ngrok-free.app/docs`.
 
 ---
 
@@ -40,8 +43,13 @@ Interactive docs available at `http://<pi-ip>:8000/docs`.
 | **PATCH**| `/doorbells/{id}/permissions/override`                | Add or remove a permission override                                 |
 | **GET**  | `/doorbells/{id}/faces`                               | List face profiles for a doorbell                                   |
 | **PATCH**| ``/faces/{face_id}/block?block=true\|false``          | Block or unblock a face profile                                     |
+| **POST** | `/notifications/isSubscribed`                         | Check if user is subscribed to notifications for a given doorbell   |
+| **POST** | `/notifications/subscribe`                            | Subscribe user to notifications for a given doorbell                |
+| **POST** | `/notifications/unsubscribe`                          | Unsubscribe user from notifications for a given doorbell            |
+| **POST** | `/notifications/notify/motionDetected`                | Push motion-detected notification to all devices from doorbell      |
 
 _All routes except `/auth/*` require `Authorization: Bearer <token>`._
+_`/notifications/notify/*` does not require an authorisation token but does require a UUID stored on the doorbell to identify it_
 
 ---
 
