@@ -50,6 +50,7 @@ Interactive docs available at `https://mutual-osprey-actually.ngrok-free.app/doc
 | **POST** | `/notifications/notify/motionDetected`                | Push motion-detected notification to all devices from doorbell      |
 
 _All routes except `/auth/*` require `Authorization: Bearer <token>`._
+
 _`/notifications/notify/*` does not require an authorisation token but does require a UUID stored on the doorbell to identify it_
 
 ---
