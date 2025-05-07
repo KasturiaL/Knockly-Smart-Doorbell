@@ -50,7 +50,7 @@ public class HomePageButtonsFragment extends Fragment {
     private Context context;
     private HashMap<String, HashMap<String, String>> doorbells = new HashMap<>();
     private Session feedSession;
-    public String commandDir = "cm2211-project-group-8/edge_device/Doorbell/working_prototype/pi";
+    public String commandDir = "cm2211-project-group-8/edge_device/Live Feed";
     private final String serverCmd = "\nchmod +x startServer.sh\n./startServer.sh";
     private int returnStatus;
 
