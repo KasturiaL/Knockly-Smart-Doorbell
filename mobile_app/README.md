@@ -5,7 +5,7 @@ Knockly has an android app that can be used to connect to the doorbell, add face
 ## Installation
 To install the app on a device you must first install Android Studio. 
 
-Then open the project on Android Studio in the **mobile_app/android folder** (if you do not open it in the correct folder it will not build correctly and you won't be able to run it).
+Then open the project on Android Studio in the **mobile_app/android** folder (if you do not open it in the correct folder it will not build correctly and you won't be able to run it).
 
 Once opened a Gradle build should run to compile the app.
 
