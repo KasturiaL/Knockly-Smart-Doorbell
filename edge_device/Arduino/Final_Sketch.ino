@@ -56,9 +56,9 @@ void setup() {
 	// Setting max serial data wait time 
 	Serial.setTimeout(1);
 
-  //while(!Serial) {
-    //;
-  //}
+  while(!Serial) {
+    ;
+  }
 
   // Prints message to log
   Serial.println("Arduino startup complete.");
