@@ -23,7 +23,7 @@ username: johnDoe25
 email: johnDoe@example.com
 password: password
 ```
-*Note:* The database is stored locally on the pi so these login details will only work on the pi provided
+*Note:* This login will only work if using the database sql file provided on the GitLab
 
 All options to interact with each doorbell can be found by clicking the button for the corresponding doorbell on the home page. Here you can see the live feed, open and close the door remotely as well as manage any users and faces connected to the doorbell as well as change the doorbell settings itself.
 
