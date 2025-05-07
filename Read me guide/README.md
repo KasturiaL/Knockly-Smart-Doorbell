@@ -19,8 +19,24 @@ For the edge_device folder, we split the folder into sections of Python and Ardu
 ## Folder directory
 
 > api
-    - 
+    - Files related to the API (refer to README.md there for more information)
+
 > docs
+    - Texts files, PDFs and other files for the group project (no effect on scripts)
+
 > edge_device
+    - Files related to the doorbell
+    
+    > Arduino
+        - Arduino file for the doorbell
+
+    > Python
+        - Python files and required libraries for the doorbell
+
+    > Startup Scripts
+        - Bash files that could automate the activation process of the doorbell
+
 > mobile_app
+    - Files related to the app (refer to README.md there for more information)
+
 > README.md
