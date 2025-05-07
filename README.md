@@ -10,14 +10,15 @@ For the edge_device folder, we split the folder into sections of Python and Ardu
 
 ## Folder directory
 
+```
 > api
-    - Files related to the API (refer to README.md there for more information)
+    - Files related to the API
 
 > docs
-    - Texts files, PDFs and other files for the group project (no effect on scripts)
+    - Texts files, PDFs and other documentation for the group project (no effect on scripts)
 
 > edge_device
-    - Files related to the doorbell
+    - Files related to the doorbell hardware
 
     > Arduino
         - Arduino file for the doorbell
@@ -32,21 +33,33 @@ For the edge_device folder, we split the folder into sections of Python and Ardu
         - Bash files that could automate the activation process of the doorbell
 
 > mobile_app
-    - Files related to the app (refer to README.md there for more information)
+    - Files to build and the run associated app
 
 > README.md
+```
 
 ## Usage
 
-Please refer to the [README file](edge_device/Arduino/README.md) in the Python folder.
+There are 3 main aspects to the system:
+- The doorbell
+- The app
+- The API
+
+Each of these aspects must be run for the system to work. For more details on how to set these up please see their individual READ ME files linked below:
+- Doorbell > Arduino - [README](edge_device/Arduino/README.md)
+- Doorbell > Python - [README](edge_device/Python/README.md)
+- App - [README](mobile_app/README.md)
+- API - [README](api/README.md)
+
 
 If the system runs correctly, it should be able to:
 
-1. Ring an alarm when the ultrasonic ranger senses a distance equal or larger than 3 centimetres between the ranger and the closest object in front of it
-2. Ring the doorbell tune when the doorbell button is pressed
-3. Open and close the door in a cycle when the manual override button is pressed/ when a stored face is recognised by the facial recognition system
-4. See a live feed of the doorbell from the app
-5. Open or close the door with the buttons in the app
+1. Open or close the door with the buttons in the app
+2. See a live feed of the doorbell from the app
+3. Ring the doorbell tune when the doorbell button is pressed
+4. Open and close the door in a cycle when the manual override button is pressed/ when a stored face is recognised by the facial recognition system
+5. Add a face from the app for the doorbell to recognise
+6. Ring an alarm when the ultrasonic ranger senses a distance equal or larger than 3 centimetres between the ranger and the closest object in front of it
 
 ## Common Problems
 
@@ -72,9 +85,13 @@ You may have named the video with an existing name in processed_videos.
 
 **Notifications not sending to the app?**
 
-You may have not connected your phone to the same network as the doorbell.
+The 'Receive Motion Notifs' setting may not be turned on in the app
 
 **Not getting a live feed?**
+
+You may have not connected your phone to the same network as the doorbell.
+
+**Not able to login to the app?**
 
 You may have not activated the ngrok.sh and uvicorn.sh scripts.
 
