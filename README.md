@@ -26,6 +26,9 @@ For the edge_device folder, we split the folder into sections of Python and Ardu
     > Databases
         - SQL file for the database
 
+    > Live Feed
+        - Files for the live feed
+
     > Python
         - Python files and required libraries for the doorbell
 
